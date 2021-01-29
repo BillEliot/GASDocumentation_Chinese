@@ -318,7 +318,7 @@ virtual void HealthChanged(const FOnAttributeChangeData& Data);
 
 为了使一个Attribute的部分或全部值继承自一个或更多Attribute, 可以使用基于一个或多个Attribute或`MMC Modifiers`的无限(Infinite)GameplayEffect. 当自动推导Attribute依赖的某个Attribute更新时它也会自动更新.  
 
-在自动推导Attribute上的所有Modifier形成的最终公式和`Modifier Aggregators`的公式是一样的. 如果你需要计算式要按一定的顺序进行, 在`MMC`中做就是了.  
+在自动推导Attribute上的所有修改器(Modifier)形成的最终公式和`Modifier Aggregators`的公式是一样的. 如果你需要计算式要按一定的顺序进行, 在`MMC`中做就是了.  
 
 ```c++
 ((CurrentValue + Additive) * Multiplicitive) / Division
@@ -555,9 +555,9 @@ PreAttributeChange()可以由Attribute的任何改变触发, 无论是使用Attr
 
 #### 4.4.7 OnAttributeAggregatorCreated()
 
-`OnAttributeAggregatorCreated(const FGameplayAttribute& Attribute, FAggregator* NewAggregator)`会在Aggregator为集合中的某个Attribute创建时触发, 它允许FAggregatorEvaluateMetaData的自定义设置, AggregatorEvaluateMetaData是Aggregator基于所有应用的Modifier评估Attribute的CurrentValue的. 默认情况下, AggregatorEvaluateMetaData只由Aggregator用于确定哪些Modifier是合格的, 以MostNegativeMod_AllPositiveMods为例, 其允许所有正(Positive)修改器但是限制负(Negative)修改器(仅最负的那一个), 这在Paragon中只允许将最负移动速度减速效果应用到玩家, 而不用管应用所有正移动速度buff时有多少负移动效果. 不合格的Modifier仍存于ASC中, 只是不被聚合进最终的CurrentValue, 一旦条件改变, 它们之后就可能合格, 就像如果最负Modifier过期后, 下一个最负Modifier(如果存在的话)就是合格的.  
+`OnAttributeAggregatorCreated(const FGameplayAttribute& Attribute, FAggregator* NewAggregator)`会在Aggregator为集合中的某个Attribute创建时触发, 它允许FAggregatorEvaluateMetaData的自定义设置, AggregatorEvaluateMetaData是Aggregator基于所有应用的修改器(Modifier)评估Attribute的CurrentValue的. 默认情况下, AggregatorEvaluateMetaData只由Aggregator用于确定哪些修改器是合格的, 以MostNegativeMod_AllPositiveMods为例, 其允许所有正(Positive)修改器但是限制负(Negative)修改器(仅最负的那一个), 这在Paragon中只允许将最负移动速度减速效果应用到玩家, 而不用管应用所有正移动速度buff时有多少负移动效果. 不合格的修改器仍存于ASC中, 只是不被总合进最终的CurrentValue, 一旦条件改变, 它们之后就可能合格, 就像如果最负修改器过期后, 下一个最负修改器(如果存在的话)就是合格的.  
 
-为了在只允许最负Modifier和所有正Modifier的例子中使用AggregatorEvaluateMetaData:  
+为了在只允许最负修改器和所有正修改器的例子中使用AggregatorEvaluateMetaData:  
 ```c++
 virtual void OnAttributeAggregatorCreated(const FGameplayAttribute& Attribute, FAggregator* NewAggregator) const override;
 
@@ -581,11 +581,11 @@ void UGSAttributeSetBase::OnAttributeAggregatorCreated(const FGameplayAttribute&
 
 ### 4.5 Gameplay Effects
 
-#### 4.5.1 定义Gameplay Effect
+#### 4.5.1 定义GameplayEffect
 
 GameplayEffect(GE)是Ability修改其自身和其他Attribute和GameplayTag的容器, 其可以立即修改Attribute(像伤害或治疗)或应用长期的状态buff/debuff(像移动速度加速或眩晕). UGameplayEffect只是一个定义单一游戏效果的数据类, 不应该在其中添加额外的逻辑. 设计师一般会创建很多UGameplayEffect的子类蓝图.  
 
-GameplayEffect通过Modifier和Executions(GameplayEffectExecutionCalculation)修改Attribute.  
+GameplayEffect通过修改器(Modifier)和Executions(GameplayEffectExecutionCalculation)修改Attribute.  
 
 GameplayEffect有三种持续类型: 即刻(Instant), 持续(Duration)和无限(Infinite).  
 
@@ -597,4 +597,141 @@ GameplayEffect有三种持续类型: 即刻(Instant), 持续(Duration)和无限(
 |持续(Duration)|Add & Remove|对于Attribute中CurrentValue的临时修改和当GameplayEffect过期或手动移除时, 应用将要被移除的GameplayTag. 持续时间是在UGameplayEffect类/蓝图中明确的.|
 |无限(Infinite)|Add & Remove|对于Attribute中CurrentValue的临时修改和当GameplayEffect移除时, 应用将要被移除的GameplayTag. 该类型自身永不过期且必须由某个Ability或ASC手动移除.|
 
+持续(Duration)和无限(Infinite)GameplayEffect可以选择应用周期性的Effect, 其每过X秒(由周期定义)就应用一次修改器(Modifier)和Execution, 当周期性的Effect修改Attribute的BaseValue和执行GameplayCue时就被视为即刻(Instant)GameplayEffect, 这对于像随时间推移的持续伤害(damage over time, DOT)这种类型的Effect很有用. **Note**: 周期性的Effect不能被预测.  
 
+如果持续(Duration)和无限(Infinite)GameplayEffect进行中的标签需求(Ongoing Tag Requirements)未满足的话, 那么它们在应用后就可以被暂时的关闭和打开(Gameplay Effect Tags), 关闭GameplayEffect会移除其修改器和已应用GameplayTag的效果, 但是不会移除该GameplayEffect, 重新打开GameplayEffect会重新应用其修改器和GameplayTag.  
+
+如果你需要手动重新计算某个持续(Duration)或无限(Infinite)GameplayEffect的修改器(Modifier)(假设有一个使用非Attribute数据的MMC), 可以使用和`UAbilitySystemComponent::ActiveGameplayEffects.GetActiveGameplayEffect(ActiveHandle).Spec.GetLevel()`相同的evel`调用UAbilitySystemComponent::ActiveGameplayEffects.SetActiveGameplayEffectLevel(FActiveGameplayEffectHandle ActiveHandle, int32 NewLevel)`. 当支持(backing)Attribute更新时, 基于支持(backing)Attribute的修改器会自动更新. SetActiveGameplayEffectLevel()更新修改器的关键函数是:  
+```c++
+MarkItemDirty(Effect);
+Effect.Spec.CalculateModifierMagnitudes();
+// Private function otherwise we'd call these three functions without needing to set the level to what it already is
+UpdateAllAggregatorModMagnitudes(Effect);
+```
+
+GameplayEffect一般是不实例化的, 当Ability或ASC想要应用GameplayEffect时, 其会从GameplayEffect的ClassDefaultObject创建一个GameplayEffectSpec, 之后成功应用的GameplayEffectSpec会添加到一个名为FActiveGameplayEffect的新结构体, 其是ASC在名为ActiveGameplayEffects的特殊结构体容器中追踪的内容.  
+
+#### 4.5.2 应用GameplayEffect
+
+GameplayEffect可以被GameplayAbility和ASC中的多个函数应用, 其通常是`ApplyGameplayEffectTo`的形式, 不同的函数本质上都是最终在目标上调用`UAbilitySystemComponent::ApplyGameplayEffectSpecToSelf()`的方便函数.  
+
+为了在GameplayAbility之外应用GameplayEffect, 例如从某个投掷物中, 你就需要获取到该目标的ASC并使用它的函数之一来`ApplyGameplayEffectToSelf`.  
+
+你可以绑定持续(Duration)或无限(Infinite)GameplayEffect的委托来监听其应用到ASC:  
+
+```c++
+AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(this, &APACharacterBase::OnActiveGameplayEffectAddedCallback);
+```
+
+回掉函数:  
+
+```c++
+virtual void OnActiveGameplayEffectAddedCallback(UAbilitySystemComponent* Target, const FGameplayEffectSpec& SpecApplied, FActiveGameplayEffectHandle ActiveHandle);
+```
+
+服务端总是会调用该函数而不管同步模式是什么, Autonomous代理只会在Full和Mixed同步模式下对于可同步的GameplayEffect调用该函数, Simulated代理只会在Full同步模式下调用该函数.  
+
+#### 4.5.3 移除GameplayEffect
+
+GameplayEffect可以被GameplayAbility和ASC中的多个函数移除, 其通常是`RemoveActiveGameplayEffect`的形式, 不同的函数本质上都是最终在目标上调用`FActiveGameplayEffectsContainer::RemoveActiveEffects()`的方便函数.  
+
+为了在GameplayAbility之外移除GameplayEffect, 你就需要获取到该目标的ASC并使用它的函数之一来`RemoveActiveGameplayEffect`.  
+
+你可以绑定持续(Duration)或无限(Infinite)GameplayEffect的委托来监听其应用到ASC:  
+
+```c++
+AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate().AddUObject(this, &APACharacterBase::OnRemoveGameplayEffectCallback);
+```
+
+回掉函数:  
+
+```c++
+virtual void OnRemoveGameplayEffectCallback(const FActiveGameplayEffect& EffectRemoved);
+```
+
+服务端总是会调用该函数而不管同步模式是什么, Autonomous代理只会在Full和Mixed同步模式下对于可同步的GameplayEffect调用该函数, Simulated代理只会在Full同步模式下调用该函数.  
+
+#### 4.5.4 GameplayEffect修改器
+
+修改器(Modifier)可以修改Attribute并且是唯一可以预测性修改Attribute的方法. 一个GameplayEffect可以有0个或多个修改器, 每个修改器通过某个指定的操作只能修改一个Attribute.  
+
+|操作|描述|
+|:-:|:-:|
+|Add|将修改器指定的Attribute加上计算结果. 使用负数以实现减法操作.|
+|Multiply|将修改器指定的Attribute乘以计算结果.|
+|Divide|将修改器指定的Attribute除以计算结果.|
+|Override|使用计算结果覆盖修改器指定的Attribute.|
+
+Attribute的CurrentValue是其所有修改器与其BaseValue计算并总合后的结果, 像下面这样的修改器总合公式被定义在`GameplayEffectAggregator.cpp`中的`FAggregatorModChannel::EvaluateWithBase`:  
+
+```c++
+((InlineBaseValue + Additive) * Multiplicitive) / Division
+```
+
+Override修改器会优先覆盖最后应用的修改器得出的最终值.  
+
+**Note**: 对于基于百分比的修改, 确保使用Multiply操作以使其在加法操作之后.  
+
+**Note**: 预测(Prediction)对于百分比修改有些问题.  
+
+有四种类型的修改器: Scalable Float, Attribute Based, Custom Calculation Class, 和 Set By Caller, 它们全都生成一些浮点数, 用于之后基于各自的操作修改指定修改器的Attribute.  
+
+|修改器类型|描述|
+|:-:|:-:|
+|Scalable Float|FScalableFloats结构体可以指向某个横向为变量, 纵向为等级的Data Table, Scalable Float会以Ability的当前等级自动读取指定Data Table的某行值(或者在GameplayEffectSpec中重写的不同等级), 该值可以被系数处理, 如果没有指定Data Table/Row, 那么该值就会被视为1, 因此系数就可以被用来在所有等级硬编码为一个单一值.![](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/scalablefloats.png)|
+|Attribute Based|Attribute Based修改器将CurrentValue或BaseValue视为Source(谁创建的GameplayEffectSpec)或Target(谁接收GameplayEffectSpec)的支持(backing)Attribute, 可以使用系数和前后系数之和来修改它. `Snapshotting`意味着当GameplayEffectSpec创建时支持Attribute被捕获(captured), 而`no snapshotting`意味着当GameplayEffectSpec被应用时Attribute被捕获.|
+|Custom Calculation Class|`Custom Calculation Class`为复杂的修改器提供了最大的灵活性, 该修改器使用了`ModifierMagnitudeCalculation`类, 且可以使用系数和前后系数之和处理浮点值结果.|
+|Set By Caller|`SetByCaller`修改器是运行时由Ability或GameplayEffectSpec的创建者于GameplayEffect之外设置的值, 例如, 如果你想让伤害值随玩家蓄力技能的长短而变化, 那么就需要使用`SetByCaller`. `SetByCaller`本质上是存于`GameplayEffectSpec`中的`TMap<FGameplayTag, float>`, 修改器只是告知`Aggregator`去寻找与提供的GameplayTag相关联的`SetByCaller`值. 修改器使用的SetByCaller只能使用该概念的GameplayTag形式, FName形式在此处不适用. 如果修改器被设置为SetByCaller, 但是带有正确GameplayTag的SetByCaller在GameplayEffectSpec中不存在, 那么游戏会抛出一个运行时错误并返回0, 这可能在Divide操作中出现问题. 参阅SetByCallers获取更多关于如何使用SetByCaller的信息.|
+
+##### 4.5.4.1 Multiply和Divide修改器
+
+默认情况下, 所有的Multiply和Divide修改器在对Attribute的BaseValue乘除前都会先加到一起.  
+
+```c++
+float FAggregatorModChannel::EvaluateWithBase(float InlineBaseValue, const FAggregatorEvaluateParameters& Parameters) const
+{
+	...
+	float Additive = SumMods(Mods[EGameplayModOp::Additive], GameplayEffectUtilities::GetModifierBiasByModifierOp(EGameplayModOp::Additive), Parameters);
+	float Multiplicitive = SumMods(Mods[EGameplayModOp::Multiplicitive], GameplayEffectUtilities::GetModifierBiasByModifierOp(EGameplayModOp::Multiplicitive), Parameters);
+	float Division = SumMods(Mods[EGameplayModOp::Division], GameplayEffectUtilities::GetModifierBiasByModifierOp(EGameplayModOp::Division), Parameters);
+	...
+	return ((InlineBaseValue + Additive) * Multiplicitive) / Division;
+	...
+}
+```
+
+```c++
+float FAggregatorModChannel::SumMods(const TArray<FAggregatorMod>& InMods, float Bias, const FAggregatorEvaluateParameters& Parameters)
+{
+	float Sum = Bias;
+
+	for (const FAggregatorMod& Mod : InMods)
+	{
+		if (Mod.Qualifies())
+		{
+			Sum += (Mod.EvaluatedMagnitude - Bias);
+		}
+	}
+
+	return Sum;
+}
+```
+
+*摘自GameplayEffectAggregator.cpp*  
+
+在该公式中Multiply和Divide修改器都有一个值为1的Bias值(加法的Bias值为0), 因此它看起来像:  
+
+```c++
+1 + (Mod1.Magnitude - 1) + (Mod2.Magnitude - 1) + ...
+```
+
+该公式会导致一些意料之外的结果, 首先, 它在对BaseValue乘除之前将所有的修改器都加到了一起, 大部分人都期望将其乘或除在一起, 例如, 你有两个值为1.5的Multiply修改器, 大部分人都期望将BaseValue乘上`1.5 x 1.5 = 2.25`, 然而, 这里是将两个1.5加在一起再乘以BaseValue(50%增量 + 另一个50%增量 = 100%增量).拿`GameplayPrediction.h`中的一个例子来说, 给基值速度500加上10%的加速buff就是550, 再加上另一个10%的加速buff就是600.  
+
+其次, 该公式还有一些关于可以使用什么值的未说明的规则, 因为这是考虑Paragon的情况而设计的.  
+
+对于`Multiply`和`Divide`中乘法加法公式的规则:  
+
+* (最多不超过1个值 < 1) AND (任何值都位于区间[1, 2))
+* OR (有一个值 >= 2)
+
+公式中的Bias
