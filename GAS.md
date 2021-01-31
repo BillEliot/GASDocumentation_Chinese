@@ -115,7 +115,7 @@ AI控制的小兵没有预先定义的`GameplayAbility`. 红方小兵有较多�
 
 ASC在`FActiveGameplayEffectsContainer ActiveGameplayEffects`中保存其当前活跃的`GameplayEffects`.  
 
-ASC在`FGameplayAbilitySpecContainer ActivatableAbilities`中保存其使用的`GameplayAbilities`. 当你想遍历`ActivatableAbilities.Items`时, 确保在循环体之上添加`ABILITYLIST_SCOPE_LOCK();`来锁定列表以防其改变(比如移除一个ability). 每个域中的`ABILITYLIST_SCOPE_LOCK();`会增加`AbilityScopeLockCount`, 之后出域时会减量. 不要尝试在`ABILITYLIST_SCOPE_LOCK();`域中移除某个ability(ability删除函数会在内部检查`AbilityScopeLockCount`以防在列表锁定时移除ability).  
+ASC在`FGameplayAbilitySpecContainer ActivatableAbilities`中保存其授予的`GameplayAbilities`. 当你想遍历`ActivatableAbilities.Items`时, 确保在循环体之上添加`ABILITYLIST_SCOPE_LOCK();`来锁定列表以防其改变(比如移除一个ability). 每个域中的`ABILITYLIST_SCOPE_LOCK();`会增加`AbilityScopeLockCount`, 之后出域时会减量. 不要尝试在`ABILITYLIST_SCOPE_LOCK();`域中移除某个ability(ability删除函数会在内部检查`AbilityScopeLockCount`以防在列表锁定时移除ability).  
 
 #### 4.1.1 同步模式
 
@@ -310,7 +310,7 @@ virtual void HealthChanged(const FOnAttributeChangeData& Data);
 
 样例项目将其绑定到了`GDPlayerState`用于更新HUD, 当生命值下降为0时, 也可以响应玩家死亡.  
 
-样例项目中有一个将上述逻辑包裹进`ASyncTask`的自定义蓝图节点, 其在`UI_HUD(UMG Widget)`中用于更新生命值, 魔法值和耐力值. 该AsyncTask会一直响应直到手动调用`EndTask()`, 就像在UMG Widget的`Destruct`事件中调用. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
+样例项目中有一个将上述逻辑包裹进`ASyncTask`的自定义蓝图节点, 其在`UI_HUD(UMG Widget)`中用于更新生命值, 魔法值和耐力值. 该AsyncTask会一直响应直到手动调用`EndTask()`, 就像在UMG Widget的`Destruct`事件中调用那样. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
 
 ![](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/attributechange.png)  
 
@@ -382,7 +382,7 @@ AbilitySystemComponent->ForceReplication();
 
 ###### 4.4.2.3.1 在物品中使用普通浮点数
 
-在物品类实例中存储普通浮点数而不是Attribute, Fortnite和GASShooter就是这样处理枪械子弹的, 对于枪械, 在其实例中存储可同步的浮点数(COND_OwnerOnly), 比如最大弹匣量, 当前弹匣中弹药量, 剩余弹药量等等, 如果枪械需要共享剩余弹药量, 那么就将剩余弹药量移到Character中共享的弹药AttributeSet里作为一个Attribute(换弹ability可以使用一个`Cost GE`从剩余弹药量中填充枪械的弹匣弹药量浮点). 因为没有为当前弹匣弹药量使用Attribute, 所以需要重写UGameplayAbility中的一些函数来检查和应用枪械中浮点数的花销(cost). 当使用ability时将枪械在GameplayAbilitySpec中转换为SourceObject, 这意味着可以在ability中访问使用ability的枪械.  
+在物品类实例中存储普通浮点数而不是Attribute, Fortnite和GASShooter就是这样处理枪械子弹的, 对于枪械, 在其实例中存储可同步的浮点数(COND_OwnerOnly), 比如最大弹匣量, 当前弹匣中弹药量, 剩余弹药量等等, 如果枪械需要共享剩余弹药量, 那么就将剩余弹药量移到Character中共享的弹药AttributeSet里作为一个Attribute(换弹ability可以使用一个`Cost GE`从剩余弹药量中填充枪械的弹匣弹药量浮点). 因为没有为当前弹匣弹药量使用Attribute, 所以需要重写UGameplayAbility中的一些函数来检查和应用枪械中浮点数的花销(cost). 当授予ability时将枪械在GameplayAbilitySpec中转换为SourceObject, 这意味着可以在ability中访问授予ability的枪械.  
 
 为了防止在全自动射击过程中枪械会反向同步弹药量并扰乱本地弹药量(译者注: 通俗解释就是因为存在同步延迟且在连续射击这一高同步过程中, 所以客户端的弹药量会来不及和服务端同步, 造成弹药量减少后又突然变多的现象.), 如果玩家拥有IsFiring的GameplayTag, 就在PreReplication()中禁用同步, 本质上是要在其中做自己的本地预测.  
 
@@ -555,7 +555,7 @@ PreAttributeChange()可以由Attribute的任何改变触发, 无论是使用Attr
 
 #### 4.4.7 OnAttributeAggregatorCreated()
 
-`OnAttributeAggregatorCreated(const FGameplayAttribute& Attribute, FAggregator* NewAggregator)`会在Aggregator为集合中的某个Attribute创建时触发, 它允许FAggregatorEvaluateMetaData的自定义设置, AggregatorEvaluateMetaData是Aggregator基于所有应用的修改器(Modifier)评估Attribute的CurrentValue的. 默认情况下, AggregatorEvaluateMetaData只由Aggregator用于确定哪些修改器是合格的, 以MostNegativeMod_AllPositiveMods为例, 其允许所有正(Positive)修改器但是限制负(Negative)修改器(仅最负的那一个), 这在Paragon中只允许将最负移动速度减速效果应用到玩家, 而不用管应用所有正移动速度buff时有多少负移动效果. 不合格的修改器仍存于ASC中, 只是不被总合进最终的CurrentValue, 一旦条件改变, 它们之后就可能合格, 就像如果最负修改器过期后, 下一个最负修改器(如果存在的话)就是合格的.  
+`OnAttributeAggregatorCreated(const FGameplayAttribute& Attribute, FAggregator* NewAggregator)`会在Aggregator为集合中的某个Attribute创建时触发, 它允许FAggregatorEvaluateMetaData的自定义设置, AggregatorEvaluateMetaData是Aggregator基于所有应用的修改器(Modifier)评估Attribute的CurrentValue的. 默认情况下, AggregatorEvaluateMetaData只由Aggregator用于确定哪些修改器是满足条件的, 以MostNegativeMod_AllPositiveMods为例, 其允许所有正(Positive)修改器但是限制负(Negative)修改器(仅最负的那一个), 这在Paragon中只允许将最负移动速度减速效果应用到玩家, 而不用管应用所有正移动速度buff时有多少负移动效果. 不满足条件的修改器仍存于ASC中, 只是不被总合进最终的CurrentValue, 一旦条件改变, 它们之后就可能满足条件, 就像如果最负修改器过期后, 下一个最负修改器(如果存在的话)就是满足条件的.  
 
 为了在只允许最负修改器和所有正修改器的例子中使用AggregatorEvaluateMetaData:  
 ```c++
@@ -734,4 +734,91 @@ float FAggregatorModChannel::SumMods(const TArray<FAggregatorMod>& InMods, float
 * (最多不超过1个值 < 1) AND (任何值都位于区间[1, 2))
 * OR (有一个值 >= 2)
 
-公式中的Bias
+公式中的Bias基本上会减去`[1, 2)`区间中的整数位, 第一个修改器的Bias会从最开始的`Sum`值减值(在循环体前设置Bias), 这就是某个值它本身的作用和某个小于1的值与`[1, 2)`区间中的值的作用.  
+
+`Multiply`的一些例子:  
+Multipliers: 0.5  
+`1 + (0.5 - 1) = 0.5`, 正确.  
+
+Multipliers: 0.5, 0.5  
+`1 + (0.5 - 1) + (0.5 - 1) = 0`, 错误, 结果应该是1. 小于1的积数在修改器相加中不起作用. Paragon这样设计只是为了使用`对于Multiply修改器的最负值`, 因此最多只会有一个小于1的值乘到BaseValue.  
+
+Multipliers: 1.1, 0.5  
+`1 + (0.5 - 1) + (1.1 - 1) = 0.6`, 正确.  
+
+Multipliers: 5, 5
+`1 + (5 - 1) + (5 - 1) = 9`, 错误, 结果应该是10. 总会是`修改器值的和 - 修改器的数量 + 1`(译者注: 修改器此时只有`5`一个.).  
+
+很多游戏会想要它们的Modify和Divide修改器在应用到BaseValue之前先乘或除到一起, 为了实现这种需求, 你需要修改`FAggregatorModChannel::EvaluateWithBase()`的引擎代码.  
+
+```c++
+float FAggregatorModChannel::EvaluateWithBase(float InlineBaseValue, const FAggregatorEvaluateParameters& Parameters) const
+{
+	...
+	float Multiplicitive = MultiplyMods(Mods[EGameplayModOp::Multiplicitive], Parameters);
+	...
+
+	return ((InlineBaseValue + Additive) * Multiplicitive) / Division;
+}
+```
+
+```c++
+float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, const FAggregatorEvaluateParameters& Parameters)
+{
+	float Multiplier = 1.0f;
+
+	for (const FAggregatorMod& Mod : InMods)
+	{
+		if (Mod.Qualifies())
+		{
+			Multiplier *= Mod.EvaluatedMagnitude;
+		}
+	}
+
+	return Multiplier;
+}
+```
+
+##### 4.5.4.2 关于修改器的GameplayTag
+
+`SourceTag`和`TargetTag`可以为每个修改器设置, 它们的作用就像GameplayEffect的`Application Tag requirements`, 因此只有当Effect应用后才会考虑标签, 也可以说当有一个周期性(Periodic)的无限(Infinite)Effect时, 这些标签只会在第一次应用Effect时才会被考虑, 而不是在每次周期执行时.  
+
+`Attribute Based`修改器也可以设置`SourceTagFilter`和`TargetTagFilter`. 当确定`Attribute Based`修改器的源Attribute的量值时, 这些过滤器就会用来排除该Attribute指定的修改器, 修改器的Source或Target中没有过滤器所标记标签的就会被排除在外.  
+
+这更详尽的意思是: 源ASC和目标ASC的标签都被GameplayEffect所捕获, 当GameplayEffectSpe创建时, 源ASC的标签被捕获, 当执行Effect时, 目标ASC的标签被捕获. 当确定无限(Infinite)或持续(Duration)Effect的修改器是否满足条件可以被应用(也就是总合条件)并且过滤器已经被设置时, 被捕获的标签就会和过滤器进行比对.  
+
+#### 4.5.5 GameplayEffect堆栈
+
+GameplayEffect默认会应用GameplayEffectSpec的新实例, 而不明确或不关心之前已经应用过的尚且存在的GameplayEffectSpec实例. GameplayEffect可以设置到堆栈中, GameplayEffectSpec的新实例不会添加到堆栈中, 而是修改当前已经存在的GameplayEffectSpec堆栈数. 堆栈只适用于持续(Duration)和无限(Infinite)GameplayEffect.  
+
+有两种类型的堆栈: Aggregate by Source和Aggregate by Target.  
+
+|堆栈类型|描述|
+|:-:|:-:|
+|Aggregate by Source|目标(Target)中的每个源ASC都有一个单独的堆栈实例, 每个源可以应用堆栈中的X个(GameplayEffect).|
+|Aggregate by Target|目标(Target)上只有一个堆栈实例而不管源如何, 每个源可以将一个堆栈应用到共享堆栈极限(Limit).|
+
+堆栈对过期, 持续刷新和周期性刷新也有一些处理策略, 这些在GameplayEffect蓝图中都有很友好的悬浮提示帮助.  
+
+样例项目包含一个用于监听GameplayEffect堆栈变化的自定义蓝图节点, HUD UMG Widget使用它来更新玩家拥有的被动护盾堆栈(层数). 该AsyncTask将会一直响应直到手动调用EndTask(), 就像在UMG Widget的`Destruct`事件中调用那样. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
+
+![Listen for GameplayEffect Stack Change BP Node](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/gestackchange.png)
+
+#### 4.5.6 授予(使用)的Ability
+
+GameplayEffect可以授予(Grant)新的GameplayAbility到ASC. 只有持续(Duration)和无限(Infinite)GameplayEffect可以授予Ability.  
+
+一个普遍用法是当想要强制另一个玩家做某些事的时候, 像击退或拉取时移动他们, 就会对他们应用一个GameplayEffect来授予其一个自动激活的Ability, 从而使其做出相应的动作.  
+
+设计师可以选择一个GameplayEffect能够授予哪些Ability, 在什么等级时授予, 将其绑定在什么输入键上和授予Ability的移除策略.  
+
+|移除策略|描述|
+|:-:|:-:|
+|立即取消Ability|当授予Ability的GameplayEffect从目标移除时, 授予的Ability就会立即取消并移除.|
+|结束时移除Ability|允许授予的Ability完成, 之后将其从目标移除.|
+|无|授予的Ability不受从目标移除的授予GameplayEffect的影响, 目标将会一直拥有该Ability直到之后被手动移除.|
+
+#### 4.5.7 GameplayEffect标签
+
+
+
