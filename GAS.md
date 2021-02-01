@@ -1,7 +1,8 @@
-**【更新日期：2021/02/01】**  
-
-原文地址: [tranek/GASDocumentation](https://github.com/BillEliot/GASDocumentation)  
+**更新时间：2021/02/01**  
 翻译此文时间: 2020.12.21  
+原文地址: [tranek/GASDocumentation](https://github.com/BillEliot/GASDocumentation)  
+翻译地址: [BillEliot/GASDocumentation_Chinese](https://github.com/BillEliot/GASDocumentation_Chinese)  
+反馈: **github/PR** or **eliotwjz@gmail.com** or **wujia.ze@qq.com**
 
 [TOC]
 
@@ -244,7 +245,7 @@ void AGDHeroCharacter::OnRep_PlayerState()
 
 `GameplayTag`必须在`DefaultGameplayTag.ini`中提前定义, UE4编辑器在project setting中提供了一个界面用于让开发者管理`GameplayTag`而无需手动编辑DefaultGameplayTag.ini, 该`GameplayTag`编辑器可以创建, 重命名, 搜索引用和删除`GameplayTag`.  
 
-![`GameplayTag` Editor in Project Settings](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/gameplaytageditor.png)  
+![GameplayTag Editor in Project Settings](https://s3.ax1x.com/2021/02/01/yZgAts.png)  
 
 搜索`GameplayTag`引用会弹出一个类似Reference Viewer的窗口来显示所有引用该`GameplayTag`的资源, 但这不会显示任何引用该`GameplayTag`的C++类.  
 
@@ -324,7 +325,7 @@ virtual void HealthChanged(const FOnAttributeChangeData& Data);
 
 样例项目中有一个将上述逻辑包裹进`ASyncTask`的自定义蓝图节点, 其在`UI_HUD(UMG Widget)`中用于更新生命值, 魔法值和耐力值. 该AsyncTask会一直响应直到手动调用`EndTask()`, 就像在UMG Widget的`Destruct`事件中调用那样. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
 
-![Listen for `Attribute` Change BP Node](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/attributechange.png)  
+![Listen for Attribute Change BP Node](https://s3.ax1x.com/2021/02/01/yZgEhn.png)  
 
 #### 4.3.5 自动推导Attribute
 
@@ -340,7 +341,7 @@ virtual void HealthChanged(const FOnAttributeChangeData& Data);
 
 在这个例子中, 我们有一个`无限(Infinite)GameplayEffect`, 其从TestAttrB和TestAttrC `Attribute`以`TestAttrA = (TestAttrA + TestAttrB) * ( 2 * TestAttrC)`公式继承得到TestAttrA, 每次TestAttrB和TestAttrC更新时, TestAttrA都会自动重新计算.  
 
-![Derived `Attribute` Example](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/derivedattribute.png)  
+![Derived Attribute Example](https://s3.ax1x.com/2021/02/01/yZge10.png)  
 
 ### 4.4 AttributeSet
 
@@ -604,11 +605,11 @@ void UGSAttributeSetBase::OnAttributeAggregatorCreated(const FGameplayAttribute&
 
 额外地, `GameplayEffect`可以添加/执行`GameplayCue`, `即刻(Instant)GameplayEffect`可以调用`GameplayCue`, `GameplayTag`中的Execute而`持续(Duration)`或`无限(Infinite)`可以调用`GameplayCue`, `GameplayTag`中的Add和Remove.  
 
-|类型|`GameplayCue`事件|何时使用|
+|类型|GameplayCue事件|何时使用|
 |:-:|:-:|:-:|
-|`即刻(Instant)`|Execute|对于`Attribute`中BaseValue的永久性的立即修改. `GameplayTag`不会被应用, 哪怕是一帧.|
-|`持续(Duration)`|Add & Remove|对于`Attribute`中CurrentValue的临时修改和当`GameplayEffect`过期或手动移除时, 应用将要被移除的`GameplayTag`. 持续时间是在UGameplayEffect类/蓝图中明确的.|
-|`无限(Infinite)`|Add & Remove|对于`Attribute`中CurrentValue的临时修改和当`GameplayEffect`移除时, 应用将要被移除的`GameplayTag`. 该类型自身永不过期且必须由某个Ability或`ASC`手动移除.|
+|即刻(Instant)|Execute|对于`Attribute`中BaseValue的永久性的立即修改. `GameplayTag`不会被应用, 哪怕是一帧.|
+|持续(Duration)|Add & Remove|对于`Attribute`中CurrentValue的临时修改和当`GameplayEffect`过期或手动移除时, 应用将要被移除的`GameplayTag`. 持续时间是在UGameplayEffect类/蓝图中明确的.|
+|无限(Infinite)|Add & Remove|对于`Attribute`中CurrentValue的临时修改和当`GameplayEffect`移除时, 应用将要被移除的`GameplayTag`. 该类型自身永不过期且必须由某个Ability或`ASC`手动移除.|
 
 `持续(Duration)`和`无限(Infinite)GameplayEffect`可以选择应用周期性的Effect, 其每过X秒(由周期定义)就应用一次`修改器`(Modifier)和Execution, 当周期性的Effect修改`Attribute`的BaseValue和执行`GameplayCue`时就被视为`即刻(Instant)GameplayEffect`, 这对于像随时间推移的持续伤害(damage over time, DOT)这种类型的Effect很有用. **Note**: 周期性的Effect不能被预测.  
 
@@ -692,7 +693,7 @@ Override`修改器`会优先覆盖最后应用的`修改器`得出的最终值.
 
 |`修改器`类型|描述|
 |:-:|:-:|
-|Scalable Float|FScalableFloats结构体可以指向某个横向为变量, 纵向为等级的Data Table, `Scalable Float`会以Ability的当前等级自动读取指定Data Table的某行值(或者在`GameplayEffectSpec`中重写的不同等级), 该值可以被系数处理, 如果没有指定Data Table/Row, 那么该值就会被视为1, 因此系数就可以被用来在所有等级硬编码为一个单一值.![ScalableFloat](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/scalablefloats.png)|
+|Scalable Float|FScalableFloats结构体可以指向某个横向为变量, 纵向为等级的Data Table, `Scalable Float`会以Ability的当前等级自动读取指定Data Table的某行值(或者在`GameplayEffectSpec`中重写的不同等级), 该值可以被系数处理, 如果没有指定Data Table/Row, 那么该值就会被视为1, 因此系数就可以被用来在所有等级硬编码为一个单一值.![ScalableFloat](https://s3.ax1x.com/2021/02/01/yZgkkj.png)|
 |`Attribute` Based|`Attribute` Based`修改器`将CurrentValue或BaseValue视为Source(谁创建的`GameplayEffectSpec`)或Target(谁接收`GameplayEffectSpec`)的支持(Backing)`Attribute`, 可以使用系数和前后系数之和来修改它. `Snapshotting`意味着当`GameplayEffectSpec`创建时支持`Attribute`被捕获(Captured), 而`no snapshotting`意味着当`GameplayEffectSpec`被应用时`Attribute`被捕获.|
 |Custom Calculation Class|`Custom Calculation Class`为复杂的`修改器`提供了最大的灵活性, 该`修改器`使用了`ModifierMagnitudeCalculation`类, 且可以使用系数和前后系数之和处理浮点值结果.|
 |Set By Caller|`SetByCaller`修改器是运行时由Ability或`GameplayEffectSpec`的创建者于`GameplayEffect`之外设置的值, 例如, 如果你想让伤害值随玩家蓄力技能的长短而变化, 那么就需要使用`SetByCaller`. `SetByCaller`本质上是存于`GameplayEffectSpec`中的`TMap<FGameplayTag, float>`, `修改器`只是告知`Aggregator`去寻找与提供的`GameplayTag`相关联的`SetByCaller`值. `修改器`使用的`SetByCaller`只能使用该概念的`GameplayTag`形式, `FName`形式在此处不适用. 如果`修改器`被设置为`SetByCaller`, 但是带有正确`GameplayTag`的`SetByCaller`在`GameplayEffectSpec`中不存在, 那么游戏会抛出一个运行时错误并返回0, 这可能在`Divide`操作中出现问题. 参阅`SetByCaller`s获取更多关于如何使用`SetByCaller`的信息.|
@@ -816,7 +817,7 @@ float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, 
 
 样例项目包含一个用于监听`GameplayEffect`堆栈变化的自定义蓝图节点, HUD UMG Widget使用它来更新玩家拥有的被动护盾堆栈(层数). 该`AsyncTask`将会一直响应直到手动调用`EndTask()`, 就像在UMG Widget的`Destruct`事件中调用那样. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
 
-![Listen for `GameplayEffect` Stack Change BP Node](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/gestackchange.png)
+![Listen for GameplayEffect Stack Change BP Node](https://s3.ax1x.com/2021/02/01/yZgZpq.png)
 
 #### 4.5.6 授予(使用)的Ability
 
@@ -858,7 +859,7 @@ float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, 
 
 `GameplayEffectSpec`(GESpec)可以看作是`GameplayEffect`的实例, 它保存了一个其所代表的`GameplayEffect`类的引用, 创建时的等级和创建者, 它在应用之前可以在运行时(Runtime)自由的创建和修改, 不像`GameplayEffect`应该由设计师在运行前创建. 当应用`GameplayEffect`时, `GameplayEffectSpec`会自`GameplayEffect`创建并且会实际应用到目标.  
 
-`GameplayEffectSpec`是由`UAbilitySystemComponent::MakeOutgoingSpec()(BlueprintCallable)`自`GameplayEffect`创建的. `GameplayEffectSpec`不必立即应用. 通常是将`GameplayEffectSpec`传递给创建自Ability的投掷物, 该投掷物可以应用到它之后击中的目标. 当`GameplayEffectSpec`成功应用后, 就会返回一个名为`FActiveGameplayEffect`的新结构体.  
+`GameplayEffectSpec`是由`UAbilitySystemComponent::MakeOutgoingSpec()(BlueprintCallable)`自`GameplayEffect`创建的. `GameplayEffectSpec`不必立即应用. 通常是将`GameplayEffectSpec`传递给创建自Ability的投掷物, 该投掷物可以应用到它之后击中的目标. 当`GameplayEffectSpec`成功应用后, 就会返回一个名为`FActiveGameplayEffect`的新结构体.  
 
 `GameplayEffectSpec`的重要内容:  
 
@@ -884,7 +885,7 @@ float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, 
 
 为了在蓝图中指定`SetByCaller`值, 请使用相应形式(`GameplayTag`或`FName`)的蓝图节点.  
 
-![Assigning SetByCaller](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/`SetByCaller`.png)
+![Assigning SetByCaller](https://s3.ax1x.com/2021/02/01/yZgmcV.png)
 
 
 
