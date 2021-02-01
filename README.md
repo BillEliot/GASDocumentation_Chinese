@@ -245,7 +245,7 @@ void AGDHeroCharacter::OnRep_PlayerState()
 
 `GameplayTag`必须在`DefaultGameplayTag.ini`中提前定义, UE4编辑器在project setting中提供了一个界面用于让开发者管理`GameplayTag`而无需手动编辑DefaultGameplayTag.ini, 该`GameplayTag`编辑器可以创建, 重命名, 搜索引用和删除`GameplayTag`.  
 
-![GameplayTag Editor in Project Settings](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/README/gameplaytageditor.png)  
+![GameplayTag Editor in Project Settings](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/gameplaytageditor.png)  
 
 搜索`GameplayTag`引用会弹出一个类似Reference Viewer的窗口来显示所有引用该`GameplayTag`的资源, 但这不会显示任何引用该`GameplayTag`的C++类.  
 
@@ -325,7 +325,7 @@ virtual void HealthChanged(const FOnAttributeChangeData& Data);
 
 样例项目中有一个将上述逻辑包裹进`ASyncTask`的自定义蓝图节点, 其在`UI_HUD(UMG Widget)`中用于更新生命值, 魔法值和耐力值. 该AsyncTask会一直响应直到手动调用`EndTask()`, 就像在UMG Widget的`Destruct`事件中调用那样. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
 
-![Listen for Attribute Change BP Node](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/README/attributechange.png) 
+![Listen for Attribute Change BP Node](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/attributechange.png) 
 
 #### 4.3.5 自动推导Attribute
 
@@ -341,7 +341,7 @@ virtual void HealthChanged(const FOnAttributeChangeData& Data);
 
 在这个例子中, 我们有一个`无限(Infinite)GameplayEffect`, 其从TestAttrB和TestAttrC `Attribute`以`TestAttrA = (TestAttrA + TestAttrB) * ( 2 * TestAttrC)`公式继承得到TestAttrA, 每次TestAttrB和TestAttrC更新时, TestAttrA都会自动重新计算.  
 
-![Derived Attribute Example](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/README/derivedattribute.png)  
+![Derived Attribute Example](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/derivedattribute.png)  
 
 ### 4.4 AttributeSet
 
@@ -693,7 +693,7 @@ Override`修改器`会优先覆盖最后应用的`修改器`得出的最终值.
 
 |修改器类型|描述|
 |:-:|:-:|
-|Scalable Float|FScalableFloats结构体可以指向某个横向为变量, 纵向为等级的Data Table, `Scalable Float`会以Ability的当前等级自动读取指定Data Table的某行值(或者在`GameplayEffectSpec`中重写的不同等级), 该值可以被系数处理, 如果没有指定Data Table/Row, 那么该值就会被视为1, 因此系数就可以被用来在所有等级硬编码为一个单一值.![ScalableFloat](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/README/scalablefloats.png)|
+|Scalable Float|FScalableFloats结构体可以指向某个横向为变量, 纵向为等级的Data Table, `Scalable Float`会以Ability的当前等级自动读取指定Data Table的某行值(或者在`GameplayEffectSpec`中重写的不同等级), 该值可以被系数处理, 如果没有指定Data Table/Row, 那么该值就会被视为1, 因此系数就可以被用来在所有等级硬编码为一个单一值.![ScalableFloat](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/scalablefloats.png)|
 |Attribute Based|`Attribute` Based`修改器`将CurrentValue或BaseValue视为Source(谁创建的`GameplayEffectSpec`)或Target(谁接收`GameplayEffectSpec`)的支持(Backing)`Attribute`, 可以使用系数和前后系数之和来修改它. `Snapshotting`意味着当`GameplayEffectSpec`创建时支持`Attribute`被捕获(Captured), 而`no snapshotting`意味着当`GameplayEffectSpec`被应用时`Attribute`被捕获.|
 |Custom Calculation Class|`Custom Calculation Class`为复杂的`修改器`提供了最大的灵活性, 该`修改器`使用了`ModifierMagnitudeCalculation`类, 且可以使用系数和前后系数之和处理浮点值结果.|
 |Set By Caller|`SetByCaller`修改器是运行时由Ability或`GameplayEffectSpec`的创建者于`GameplayEffect`之外设置的值, 例如, 如果你想让伤害值随玩家蓄力技能的长短而变化, 那么就需要使用`SetByCaller`. `SetByCaller`本质上是存于`GameplayEffectSpec`中的`TMap<FGameplayTag, float>`, `修改器`只是告知`Aggregator`去寻找与提供的`GameplayTag`相关联的`SetByCaller`值. `修改器`使用的`SetByCaller`只能使用该概念的`GameplayTag`形式, `FName`形式在此处不适用. 如果`修改器`被设置为`SetByCaller`, 但是带有正确`GameplayTag`的`SetByCaller`在`GameplayEffectSpec`中不存在, 那么游戏会抛出一个运行时错误并返回0, 这可能在`Divide`操作中出现问题. 参阅`SetByCaller`s获取更多关于如何使用`SetByCaller`的信息.|
@@ -817,7 +817,7 @@ float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, 
 
 样例项目包含一个用于监听`GameplayEffect`堆栈变化的自定义蓝图节点, HUD UMG Widget使用它来更新玩家拥有的被动护盾堆栈(层数). 该`AsyncTask`将会一直响应直到手动调用`EndTask()`, 就像在UMG Widget的`Destruct`事件中调用那样. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
 
-![Listen for GameplayEffect Stack Change BP Node](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/README/gestackchange.png)
+![Listen for GameplayEffect Stack Change BP Node](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/gestackchange.png)
 
 #### 4.5.6 授予(使用)的Ability
 
@@ -885,7 +885,7 @@ float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, 
 
 为了在蓝图中指定`SetByCaller`值, 请使用相应形式(`GameplayTag`或`FName`)的蓝图节点.  
 
-![Assigning SetByCaller](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/README/setbycaller.png)
+![Assigning SetByCaller](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/setbycaller.png)
 
 
 
