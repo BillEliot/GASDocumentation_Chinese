@@ -232,7 +232,7 @@ void AGDHeroCharacter::OnRep_PlayerState()
 
 GameplayTag必须在`DefaultGameplayTags.ini`中提前定义, UE4编辑器在project setting中提供了一个界面用于让开发者管理GameplayTag而无需手动编辑DefaultGameplayTags.ini, 该GameplayTag编辑器可以创建, 重命名, 搜索引用和删除GameplayTag.  
 
-![](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/gameplaytageditor.png)  
+![GameplayTag Editor in Project Settings](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/gameplaytageditor.png)  
 
 搜索GameplayTag引用会弹出一个类似Reference Viewer的窗口来显示所有引用该GameplayTag的资源, 但这不会显示任何引用该GameplayTag的C++类.  
 
@@ -312,7 +312,7 @@ virtual void HealthChanged(const FOnAttributeChangeData& Data);
 
 样例项目中有一个将上述逻辑包裹进`ASyncTask`的自定义蓝图节点, 其在`UI_HUD(UMG Widget)`中用于更新生命值, 魔法值和耐力值. 该AsyncTask会一直响应直到手动调用`EndTask()`, 就像在UMG Widget的`Destruct`事件中调用那样. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
 
-![](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/attributechange.png)  
+![Listen for Attribute Change BP Node](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/attributechange.png)  
 
 #### 4.3.5 自动推导Attribute
 
@@ -328,7 +328,7 @@ virtual void HealthChanged(const FOnAttributeChangeData& Data);
 
 在这个例子中, 我们有一个无限(Infinite)GameplayEffect, 其从TestAttrB和TestAttrC Attribute以`TestAttrA = (TestAttrA + TestAttrB) * ( 2 * TestAttrC)`公式继承得到TestAttrA, 每次TestAttrB和TestAttrC更新时, TestAttrA都会自动重新计算.  
 
-![](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/derivedattribute.png)  
+![Derived Attribute Example](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/derivedattribute.png)  
 
 ### 4.4 Attribute Set
 
@@ -678,7 +678,7 @@ Override修改器会优先覆盖最后应用的修改器得出的最终值.
 
 |修改器类型|描述|
 |:-:|:-:|
-|Scalable Float|FScalableFloats结构体可以指向某个横向为变量, 纵向为等级的Data Table, Scalable Float会以Ability的当前等级自动读取指定Data Table的某行值(或者在GameplayEffectSpec中重写的不同等级), 该值可以被系数处理, 如果没有指定Data Table/Row, 那么该值就会被视为1, 因此系数就可以被用来在所有等级硬编码为一个单一值.![](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/scalablefloats.png)|
+|Scalable Float|FScalableFloats结构体可以指向某个横向为变量, 纵向为等级的Data Table, Scalable Float会以Ability的当前等级自动读取指定Data Table的某行值(或者在GameplayEffectSpec中重写的不同等级), 该值可以被系数处理, 如果没有指定Data Table/Row, 那么该值就会被视为1, 因此系数就可以被用来在所有等级硬编码为一个单一值.![ScalableFloat](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/scalablefloats.png)|
 |Attribute Based|Attribute Based修改器将CurrentValue或BaseValue视为Source(谁创建的GameplayEffectSpec)或Target(谁接收GameplayEffectSpec)的支持(backing)Attribute, 可以使用系数和前后系数之和来修改它. `Snapshotting`意味着当GameplayEffectSpec创建时支持Attribute被捕获(captured), 而`no snapshotting`意味着当GameplayEffectSpec被应用时Attribute被捕获.|
 |Custom Calculation Class|`Custom Calculation Class`为复杂的修改器提供了最大的灵活性, 该修改器使用了`ModifierMagnitudeCalculation`类, 且可以使用系数和前后系数之和处理浮点值结果.|
 |Set By Caller|`SetByCaller`修改器是运行时由Ability或GameplayEffectSpec的创建者于GameplayEffect之外设置的值, 例如, 如果你想让伤害值随玩家蓄力技能的长短而变化, 那么就需要使用`SetByCaller`. `SetByCaller`本质上是存于`GameplayEffectSpec`中的`TMap<FGameplayTag, float>`, 修改器只是告知`Aggregator`去寻找与提供的GameplayTag相关联的`SetByCaller`值. 修改器使用的SetByCaller只能使用该概念的GameplayTag形式, FName形式在此处不适用. 如果修改器被设置为SetByCaller, 但是带有正确GameplayTag的SetByCaller在GameplayEffectSpec中不存在, 那么游戏会抛出一个运行时错误并返回0, 这可能在Divide操作中出现问题. 参阅SetByCallers获取更多关于如何使用SetByCaller的信息.|
@@ -819,6 +819,58 @@ GameplayEffect可以授予(Grant)新的GameplayAbility到ASC. 只有持续(Durat
 |无|授予的Ability不受从目标移除的授予GameplayEffect的影响, 目标将会一直拥有该Ability直到之后被手动移除.|
 
 #### 4.5.7 GameplayEffect标签
+
+GameplayEffect可以带有多个GameplayTagContainer, 设计师可以编辑每个种类(Category)的`Added`和`Removed`GameplayTagContainer, 结果会在编译时显示在合并的GameplayTagContainer中. `Added`标签是该GameplayEffect新增的其父类之前没有的标签, `Removed`标签是其父类拥有但该类没有的标签.  
+
+|分类|描述|
+|:-:|:-:|
+|Gameplay Effect Asset Tags|GameplayEffect拥有的标签, 它们自身没有任何功能且只用于描述GameplayEffect.|
+|Granted Tags|存于GameplayEffect中但又用于GameplayEffect应用到的ASC的标签. 当GameplayEffect移除时它们也会从ASC中移除. 该标签只作用于持续(Duration)和无限(Infinite)GameplayEffect.|
+|Ongoing Tag Requirements|一旦应用后, 这些标签将决定GameplayEffect是开启还是关闭. 一个GameplayEffect可以是关闭但仍然是应用的. 如果某个GameplayEffect由于不符合Ongoing Tag Requirements而关闭, 但是之后又满足需求了, 那么该GameplayEffect会重新打开并重应用它的修改器. 该标签只作用于持续(Duration)和无限(Infinite)GameplayEffect.|
+|Application Tag Requirements|位于目标上决定某个GameplayEffect是否可以应用到该目标的标签, 如果不满足这些需求, 那么GameplayEffect就不可应用.|
+|Remove Gameplay Effects with Tags|当该GameplayEffect被成功应用后, 位于目标上的GameplayEffect会从目标中删除它在`Asset Tag`或`Granted Tag`中的这些标签.|
+
+#### 4.5.8 免疫
+
+GameplayEffect可以基于GameplayTag实现免疫, 有效阻止其他GameplayEffect的应用. 尽管免疫可以由`Application Tag Requirements`等方式有效地实现, 但是使用该系统可以在GameplayEffect被免疫阻塞时提供`UAbilitySystemComponent::OnImmunityBlockGameplayEffectDelegate`委托(Delegate).  
+
+`GrantedApplicationImmunityTags`会检查源ASC(包括源Ability的AbilityTags, 如果有的话)是否包含特定的标签, 这是一种基于特定Character或源的标签对其所有GameplayEffect提供免疫的方法.  
+
+`Granted Application Immunity Query`会检查传入的GameplayEffectSpec是否与其查询条件相匹配, 从而阻塞或允许其应用.  
+
+GameplayEffect蓝图中的查询条件都有友好的悬浮提示帮助.  
+
+#### 4.5.9 Gameplay Effect Spec
+
+GameplayEffectSpec(GESpec)可以看作是GameplayEffect的实例, 它保存了一个其所代表的GameplayEffect类的引用, 创建时的等级和创建者, 它在应用之前可以在运行时(Runtime)自由的创建和修改, 不像GameplayEffect应该由设计师在运行前创建. 当应用GameplayEffect时, GameplayEffectSpec会自GameplayEffect创建并且会实际应用到目标.  
+
+GameplayEffectSpec是由`UAbilitySystemComponent::MakeOutgoingSpec()(BlueprintCallable)`自GameplayEffect创建的. GameplayEffectSpec不必立即应用. 通常是将GameplayEffectSpe传递给创建自Ability的投掷物, 该投掷物可以应用到它之后击中的目标. 当GameplayEffectSpec成功应用后, 就会返回一个名为`FActiveGameplayEffect`的新结构体.  
+
+`GameplayEffectSpec`的重要内容:  
+
+* 创建该GameplayEffectSpec的GameplayEffect类.
+* 该GameplayEffectSpec的等级. 通常和创建GameplayEffectSpec的Aility的等级一样, 但是可以是不同的.
+* GameplayEffectSpec的持续时间. 默认是GameplayEffect的持续时间, 但是可以是不同的.
+* 对于周期性的Effect中GameplayEffectSpec的周期. 默认是GameplayEffect的周期, 但是可以是不同的.
+* 该GameplayEffectSpec的当前堆栈数. 堆栈限制取决于GameplayEffect.
+* GameplayEffectContextHandle表明该GameplayEffectSpec由谁创建.
+* Attribute在GameplayEffectSpec创建时由于Snapshotting被捕获.
+* GameplayEffectSpec授予给目标的DynamicGrantedTag添加到GameplayEffect授予的GameplayTag中.
+* GameplayEffectSpec的DynamicAssetTag添加到GameplayEffect的AssetTag中.
+* SetByCaller TMaps.
+
+##### 4.5.9.1 SetByCallers
+
+`SetByCaller`允许GameplayEffectSpec拥有和`GameplayTag`或`FName`相关联的浮点值, 它们存储在GameplayEffectSpec上其各自的`TMaps: TMap<FGameplayTag, float>`和`TMap<FName, float>`中, 可以作为GameplayEffect中的修改器或者传递浮点值的一般方法使用. 其普遍用法是经由SetByCaller传递某个Ability内部生成的数值数据到`GameplayEffectExecutionCalculations`或`ModifierMagnitudeCalculations`.  
+
+|SetByCaller使用|说明|
+|:-:|:-:|
+|修改器|必须提前在GameplayEffect类中定义. 只能使用GameplayTag形式. 如果在GameplayEffect类中定义而GameplayEffectSpec中没有相应的标签/浮点值对, 那么游戏在GameplayEffectSpec应用时会抛出运行时错误并返回0, 对于`Divide`操作这是个潜在问题, 参阅`Modifier`.|
+|其他位置|无需提前定义. 读取GameplayEffectSpec中不存在的SetByCaller会返回一个由开发者定义的可带有警告信息的默认值.|
+
+为了在蓝图中指定SetByCaller值, 请使用相应形式(GameplayTag或FName)的蓝图节点.  
+
+![Assigning SetByCaller](https://raw.githubusercontent.com/tranek/GASDocumentation/master/Images/setbycaller.png)
 
 
 
