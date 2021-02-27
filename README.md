@@ -13,7 +13,7 @@
 该文档的目的是阐明GAS中的主要概念和相关类, 并结合我的经验提供一些附加说明. 在社区用户中, 已经形成了大量有关GAS的"部落知识", 而我致力于将我了解的全部在这里分享.  
 
 样例项目和文档目前基于`Unreal Engine 4.26`. 该文档拥有可用于旧版本Unreal Engine的分支, 但是它们不再受支持, 并且可能存在bug和过时信息.  
-[GASShooter](https://github.com/tranek/GASShooter)是该样例项目的姐妹项目, 其演示了基于多人FPS/TPS的高级GAS技术.  
+[GASShooter](https://github.com/tranek/GASShooter)是该样例项目的姐妹项目, 其演示了基于多人FPS/TPS的高阶级GAS技术.  
 
 最好的文档永远是该插件的代码.  
 
@@ -53,7 +53,7 @@ GAS中的现存问题:
 ## 2. 样例项目
 
 该文档包含一个支持多人联机的第三人称射击游戏模板项目, 其目标受众为初识`GameplayAbilitySystem`插件, 但并不是Unreal Engine 4新手. 用户应该了解C++, 蓝图, UMG, Replication和其他UE4的中间件. 该项目提供了一个样例, 其向你展示了如何使用`GameplayAbilitySystem`插件建立一个基础的支持多人联机的第三人称射击游戏, 其中`AbilitySystemComponent(ASC)`分别位于`PlayerState`类代表玩家/AI控制的人物和位于`Character`类代表AI控制的小兵.  
-我在保证展现GAS基础和带有完整注释的代码所表示的一些普遍技能的同时, 尽力使这个样例足够简单. 由于该文档专注于初学者, 因此该样例不包含像`Predicting Projectiles`这样的高级技术.  
+我在保证展现GAS基础和带有完整注释的代码所表示的一些普遍技能的同时, 尽力使这个样例足够简单. 由于该文档专注于初学者, 因此该样例不包含像`Predicting Projectiles`这样的高阶技术.  
 概念说明:  
 * `ASC`位于`PlayerState`还是`Character`.
 * 网络同步的`Attribute`.
@@ -64,7 +64,7 @@ GAS中的现存问题:
 * `GameplayEffectExecutionCalculations`.
 * 眩晕效果.
 * 死亡和重生.
-* 在服务器上使用能力(Ability)生成抛射物(Projectile).
+* 在服务端上使用能力(Ability)生成抛射物(Projectile).
 * 在瞄准和奔跑时, 预测性的修改本地玩家速度.
 * 不断消耗耐力来奔跑.
 * 消耗魔法值来使用能力(Ability).
@@ -87,7 +87,7 @@ GAS中的现存问题:
 |奔跑|左Shift|Yes|Blueprint|当按住左Shift时, 角色在消耗体力的同时跑得更快.|
 |向前猛冲|Q|Yes|Blueprint|角色消耗体力的同时向前猛冲.|
 |被动护盾叠加|被动|No|Blueprint|每过4s角色获得一个最大层数为4的护盾, 每次受到伤害时移除一层护盾.|
-|流星坠落|R|No|Blueprint|角色锁定一个敌人召唤一个流星, 对其造成伤害和眩晕效果.|
+|陨石坠落|R|No|Blueprint|角色锁定一个敌人召唤一个陨石, 对其造成伤害和眩晕效果.|
 
 `GameplayAbility`无论由蓝图还是C++创建都没关系. 这里我们使用蓝图和C++混合创建, 意在展示每种方式的使用方法.  
 AI控制的小兵没有预先定义的`GameplayAbility`. 红方小兵有较多的生命回复, 蓝方小兵有较多的初始生命.  
@@ -261,7 +261,7 @@ C++中获取`GameplayTag`引用:
 FGameplayTag::RequestGameplayTag(FName("Your.GameplayTag.Name"))
 ```
 
-对于像获取父或子`GameplayTag`的高级操作, 请查看`GameplayTagManager`提供的函数. 为了访问`GameplayTagManager`, 请引用`GameplayTagManager.h`并使用`UGameplayTagManager::Get().FunctionName`调用函数. 相比使用常量字符串进行操作和比较, `GameplayTagManager`实际上使用关系节点(父, 子等等)保存`GameplayTag`以获得更快的处理速度.  
+对于像获取父或子`GameplayTag`的高阶操作, 请查看`GameplayTagManager`提供的函数. 为了访问`GameplayTagManager`, 请引用`GameplayTagManager.h`并使用`UGameplayTagManager::Get().FunctionName`调用函数. 相比使用常量字符串进行操作和比较, `GameplayTagManager`实际上使用关系节点(父, 子等等)保存`GameplayTag`以获得更快的处理速度.  
 
 `GameplayTag`和`GameplayTagContainer`有可选UPROPERTY宏`Meta = (Categories = "GameplayCue")`用于在蓝图中过滤标签而只显示父标签为`GameplayCue`的`GameplayTag`, 当你知道`GameplayTag`或`GameplayTagContainer`变量应该只用于`GameplayCue`时, 这将是非常有用的.  
 
@@ -420,7 +420,7 @@ void AGSWeapon::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracke
 
 ###### 4.4.2.3.2 在物品中使用AttributeSet
 
-在物品中使用单独的`AttributeSet`可以实现"将其添加到玩家的Inventory", 但还是有一定的局限性. 较早版本的GASShooter中的武器弹药是使用的这种方法, 武器类在其自身存储诸如最大弹匣量, 当前弹匣弹药量, 剩余弹药量等等到一个`AttributeSet`, 如果枪械需要共享剩余弹药量, 那么就将剩余弹药量移到Character中共享的弹药`AttributeSet`里. 当服务器上某个武器添加到玩家的Inventory后, 该武器会将它的`AttributeSet`添加到玩家的`ASC::SpawnedAttribute`, 之后服务器会将其同步下发到客户端, 如果该武器从Inventory中移除, 它也会将其`AttributeSet`从`ASC::SpawnedAttribute`中移除.  
+在物品中使用单独的`AttributeSet`可以实现"将其添加到玩家的Inventory", 但还是有一定的局限性. 较早版本的GASShooter中的武器弹药是使用的这种方法, 武器类在其自身存储诸如最大弹匣量, 当前弹匣弹药量, 剩余弹药量等等到一个`AttributeSet`, 如果枪械需要共享剩余弹药量, 那么就将剩余弹药量移到Character中共享的弹药`AttributeSet`里. 当服务端上某个武器添加到玩家的Inventory后, 该武器会将它的`AttributeSet`添加到玩家的`ASC::SpawnedAttribute`, 之后服务端会将其同步下发到客户端, 如果该武器从Inventory中移除, 它也会将其`AttributeSet`从`ASC::SpawnedAttribute`中移除.  
 
 当`AttributeSet`存于除了OwnerActor之外的对象上时(对于某个武器来说), 会得到一些关于`AttributeSet`的编译错误, 解决办法是在BeginPlay()中构建`AttributeSet`而不是在构造函数中, 并在武器类中实现`IAbilitySystemInterface`(当你添加武器到玩家Inventory时设置`ASC`的指针).  
 
@@ -887,5 +887,589 @@ float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, 
 
 ![Assigning SetByCaller](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/setbycaller.png)
 
+为了在蓝图中读取`SetByCaller`值, 需要在蓝图中创建自定义节点.  
+
+为了在C++中指定`SetByCaller`值, 需要使用相应形式的函数(`GameplayTag`或`FName`).  
+
+```c++
+void FGameplayEffectSpec::SetSetByCallerMagnitude(FName DataName, float Magnitude);
+```
+
+```c++
+void FGameplayEffectSpec::SetSetByCallerMagnitude(FGameplayTag DataTag, float Magnitude);
+```
+
+为了在C++中读取`SetByCaller`的值, 需要使用相应形式的函数(`GameplayTag`或`FName`).  
+
+```c++
+float GetSetByCallerMagnitude(FName DataName, bool WarnIfNotFound = true, float DefaultIfNotFound = 0.f) const;
+```
+
+```c++
+float GetSetByCallerMagnitude(FGameplayTag DataTag, bool WarnIfNotFound = true, float DefaultIfNotFound = 0.f) const;
+```
+
+我建议使用`GameplayTag`形式而不是`FName`形式, 这可以避免蓝图中的拼写错误, 并且当`GameplayEffectSpec`同步时, `GameplayTag`比`FName`在网络传输中更有效率, 因为`TMap`也会同步.  
+
+#### 4.5.10 GameplayEffect上下文
+
+`GameplayEffectContext`结构体存有关于`GameplayEffectSpec`创建者(Instigator)和`TargetData`的信息, 这也是一个很好的可继承结构体以在`ModifierMagnitudeCalculation`/`GameplayEffectExecutionCalculation`, `AttributeSet`和`GameplayCue`之间传递任意数据.  
+
+继承`GameplayEffectContext`:  
+
+1. 继承`FGameplayEffectContext`.
+2. 重写`FGameplayEffectContext::GetScriptStruct()`.
+3. 重写`FGameplayEffectContext::Duplicate()`.
+4. 如果新数据需要同步的话, 重写`FGameplayEffectContext::NetSerialize()`.
+5. 对子结构体实现`TStructOpsTypeTraits`, 就像父结构体`FGameplayEffectContext`有的那样.
+6. 在`AbilitySystemGlobals`类中重写`AllocGameplayEffectContext()`以返回一个新的子结构体对象.
+
+GASShooter使用了一个子结构体`GameplayEffectContext`来添加可以在`GameplayCue`中访问的`TargetData`, 特别是对于霰弹枪, 因为它可以击打多个敌人.  
+
+#### 4.5.11 Modifier Magnitude Calculation
+
+`ModifierMagnitudeCalculations`(`ModMagcCalc`或`MMC`)是在`GameplayEffect`中作为`修改器`使用的强有力的类, 它的功能类似`GameplayEffectExecutionCalculation`但是要逊色一些, 最重要的是它是可预测的. 它唯一要做的就是自`CalculateBaseMagnitude_Implementation()`返回浮点值, 你可以在C++和蓝图中继承并重写该函数.  
+
+`MMC`可以用于各种持续时间的`GameplayEffect` - `即刻(Instant)`, `持续(Duration)`, `无限(Infinite)`和`周期性(Periodic)`.  
+
+`MMC`的强大之处在于可以完全访问`GameplayEffectSpec`来读取`GameplayTag`和`SetByCaller`以捕获位于`GameplayEffect`的`Source`或`Target`中任意数量的`Attribute`值. `Attribute`可以是快照(Snapshot)或者不是, 快照`Attribute`在`GameplayEffectSpec`创建时被捕获而非快照`Attribute`在`GameplayEffectSpec`应用时被捕获并且在`Attribute`被无限(Infinite)或持续(Duration)`GameplayEffect`修改时会自动更新. 捕获`Attribute`会自`ASC`的现有修改器重新计算它们的`CurrentValue`, 该重新计算**不会**执行`AbilitySet`中的`PreAttributeChange()`, 因此所有的限制操作(Clamp)必须在这里重新处理.  
+
+|快照|Source或Target|在GameplayEffectSpec中捕获|Attribute被无限(Infinite)或持续(Duration)GameplayEffect修改时自动更新|
+|:-:|:-:|:-:|:-:|
+|是|Source|创建|否|
+|是|Target|应用(译者注: 结合上文说明, 译者猜测此处应该为"创建", 系作者笔误.)|否|
+|否|Source|应用|是|
+|否|Target|应用|是|
+
+`MMC`的结果浮点值可以进一步由系数和前后系数之和在`GameplayEffect`的修改器中修改.  
+
+举一个`MMC`的例子, 该`MMC`会捕获目标的魔法值`Attribute`并因为毒药Effect而将其减少, 其减少量的变化取决于目标所拥有的魔法值和可能拥有的某个标签:  
+
+```c++
+UPAMMC_PoisonMana::UPAMMC_PoisonMana()
+{
+
+	//ManaDef defined in header FGameplayEffectAttributeCaptureDefinition ManaDef;
+	ManaDef.AttributeToCapture = UPAAttributeSetBase::GetManaAttribute();
+	ManaDef.AttributeSource = EGameplayEffectAttributeCaptureSource::Target;
+	ManaDef.bSnapshot = false;
+
+	//MaxManaDef defined in header FGameplayEffectAttributeCaptureDefinition MaxManaDef;
+	MaxManaDef.AttributeToCapture = UPAAttributeSetBase::GetMaxManaAttribute();
+	MaxManaDef.AttributeSource = EGameplayEffectAttributeCaptureSource::Target;
+	MaxManaDef.bSnapshot = false;
+
+	RelevantAttributesToCapture.Add(ManaDef);
+	RelevantAttributesToCapture.Add(MaxManaDef);
+}
+
+float UPAMMC_PoisonMana::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec & Spec) const
+{
+	// Gather the tags from the source and target as that can affect which buffs should be used
+	const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
+	const FGameplayTagContainer* TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
+
+	FAggregatorEvaluateParameters EvaluationParameters;
+	EvaluationParameters.SourceTags = SourceTags;
+	EvaluationParameters.TargetTags = TargetTags;
+
+	float Mana = 0.f;
+	GetCapturedAttributeMagnitude(ManaDef, Spec, EvaluationParameters, Mana);
+	Mana = FMath::Max<float>(Mana, 0.0f);
+
+	float MaxMana = 0.f;
+	GetCapturedAttributeMagnitude(MaxManaDef, Spec, EvaluationParameters, MaxMana);
+	MaxMana = FMath::Max<float>(MaxMana, 1.0f); // Avoid divide by zero
+
+	float Reduction = -20.0f;
+	if (Mana / MaxMana > 0.5f)
+	{
+		// Double the effect if the target has more than half their mana
+		Reduction *= 2;
+	}
+	
+	if (TargetTags->HasTagExact(FGameplayTag::RequestGameplayTag(FName("Status.WeakToPoisonMana"))))
+	{
+		// Double the effect if the target is weak to PoisonMana
+		Reduction *= 2;
+	}
+	
+	return Reduction;
+}
+```
+
+如果你没有在`MMC`的构造函数中将`FGameplayEffectAttributeCaptureDefinition`添加到`RelevantAttributesToCapture`中并且尝试捕获`Attribute`, 那么将会得到一个关于捕获时缺失Spec的错误. 如果不需要捕获`Attribute`, 那么就不必添加什么到`RelevantAttributesToCapture`.  
+
+#### 4.5.12 Gameplay Effect Execution Calculation
+
+`GameplayEffectExecutionCalculation`(ExecutionCalculation, Execution(你会在插件代码里经常看到这个词)或ExecCalc)是`GameplayEffect`修改`ASC`最强有力的方式. 像`ModifierMagnitudeCalculation`一样, 它也可以捕获`Attribute`并选择性地为其创建快照, 和`MMC`不同的是, 它可以修改多个`Attribute`并且基本上可以处理程序员想要做的任何事. 这种强有力和灵活性的负面就是它是不可预测的和必须在C++中实现.  
+
+`ExecutionCalculation`只能由`即刻(Instant)`和`周期性(Periodic)`GameplayEffect使用, 插件中所有和"Execute"相关的一般都引用到这两种类型的`GameplayEffect`.  
+
+当`GameplayEffectSpec`创建时, 快照(Snapshotting)会捕获`Attribute`, 而当`GameplayEffectSpec`应用时, 非快照会捕获`Attribute`. 捕获`Attribute`会自`ASC`的现有修改器重新计算它们的`CurrentValue`, 该重新计算**不会**执行`AbilitySet`中的`PreAttributeChange()`, 因此所有的限制操作(Clamp)必须在这里重新处理.  
+
+|快照|Source或Target|在GameplayEffectSpec中捕获|
+|:-:|:-:|:-:|:-:|
+|是|Source|创建|
+|是|Target|应用(译者注: 结合上文说明, 译者猜测此处应该为"创建", 系作者笔误.)|
+|否|Source|应用|
+|否|Target|应用|
+
+为了设置`Attribute`捕获, 我们采用Epic的ActionRPG样例项目使用的方式, 定义一个保存和声明如何捕获`Attribute`的结构体, 并在该结构体的构造函数中创建一个它的副本(Copy). 每个`ExecCalc`都需要有一个这样的结构体. **Note**: 每个结构体需要一个独一无二的名字, 因为它们共享同一个命名空间, 多个结构体使用相同的名字在捕获`Attribute`时会造成错误的行为(大多是捕获到错误的`Attribute`的值).  
+
+对于`Local Predicted`, `Server Only`和`Server Initiated`的`GameplayAbility`, `ExecCalc`只在服务端调用.  
+
+`ExecCalc`最普遍的应用场景是计算来自一个很多`Source`和`Target`中的`Attribute`的复杂公式的伤害值. 样例项目中有一个简单的`ExecCalc`用于计算伤害值, 其从`GameplayEffectSpec`的`SetByCaller`中读取伤害值, 之后基于从`Target`捕获的护盾`Attribute`来减少该伤害值. 参阅`GDDamageExecCalculation.cpp/.h`.  
+
+##### 4.5.12.1 发送数据到Execution Calculation
+
+除了捕获`Attribute`, 还有几种方法可以发送数据到`ExecutionCalculation`.  
+
+###### 4.5.12.1.1 SetByCaller
+
+任何设置在`GameplayEffectSpec`中的`SetByCaller`都可以直接在`ExecutionCalculation`中读取.  
+
+```c++
+const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
+float Damage = FMath::Max<float>(Spec.GetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Damage")), false, -1.0f), 0.0f);
+```
+
+###### 4.5.12.1.2 支持(Backing)数据Attribute计算修改器
+
+如果你想硬编码值到`GameplayEffect`, 可以使用`CalculationModifier`传递, 其使用捕获的`Attribute`之一作为支持(Backing)数据.  
+
+在这个截图例子中, 我们给捕获的伤害值`Attribute`增加了50, 你也可以将其设为`Override`来直接传入硬编码值.  
+
+![Backing Data Attribute Calculation Modifier]()
+
+当`ExecutionCalculation`捕获该`Attribute`时会读取这个值.  
+
+```c++
+float Damage = 0.0f;
+// Capture optional damage value set on the damage GE as a CalculationModifier under the ExecutionCalculation
+ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().DamageDef, EvaluationParameters, Damage);
+```
+
+###### 4.5.12.1.3 支持(Backing)数据临时变量计算修改器
+
+如果你想硬编码值到`GameplayEffect`, 可以在C++中使用`CalculationModifier`传递, 其使用一个`临时变量`或`暂时聚合器(Transient Aggregator)`, 该`临时变量`与`GameplayTag`相关联.  
+
+在这个截图例子中, 我们使用`Data.Damage GameplayTag`增加50到一个临时变量.  
+
+![Backing Data Temporary Variable Calculation Modifier]()
+
+添加支持(Backing)临时变量到你的`ExecutionCalculation`构造函数:  
+
+```c++
+ValidTransientAggregatorIdentifiers.AddTag(FGameplayTag::RequestGameplayTag("Data.Damage"));
+```
+
+`ExecutionCalculation`会使用和`Attribute`捕获函数相似的特殊捕获函数来读取这个值.  
+
+```c++
+float Damage = 0.0f;
+ExecutionParams.AttemptCalculateTransientAggregatorMagnitude(FGameplayTag::RequestGameplayTag("Data.Damage"), EvaluationParameters, Damage);
+```
+
+###### 4.5.12.1.4 GameplayEffect上下文
+
+你可以通过`GameplayEffectSpec`中的自定义`GameplayEffectContext`发送数据到`ExecutionCalculation`.  
+
+在`ExecutionCalculation`中, 你可以自`FGameplayEffectCustomExecutionParameters`访问`EffectContext`.  
+
+```c++
+const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
+FGSGameplayEffectContext* ContextHandle = static_cast<FGSGameplayEffectContext*>(Spec.GetContext().Get());
+```
+
+如果你需要修改`GameplayEffectSpec`中的什么或者`EffectContext`:  
+
+```c++
+FGameplayEffectSpec* MutableSpec = ExecutionParams.GetOwningSpecForPreExecuteMod();
+FGSGameplayEffectContext* ContextHandle = static_cast<FGSGameplayEffectContext*>(MutableSpec->GetContext().Get());
+```
+
+在`ExecutionCalculation`中修改`GameplayEffectSpec`时要小心. 参看`GetOwningSpecForPreExecuteMod()`的注释.  
+
+```c++
+/** Non const access. Be careful with this, especially when modifying a spec after attribute capture. */
+FGameplayEffectSpec* GetOwningSpecForPreExecuteMod() const;
+```
+
+#### 4.5.13 自定义应用需求
+
+`CustomApplicationRequirement(CAR)`类为设计师提供对于`GameplayEffect`是否可以应用的高阶控制, 而不是对`GameplayEffect`进行简单的`GameplayTag`检查. 这可以通过在蓝图中重写`CanApplyGameplayEffect()`和在C++中重写`CanApplyGameplayEffect_Implementation()`实现.  
+
+`CAR`的应用场景:  
+
+* 目标需要有一定数量的`Attribute`.
+* 目标需要有一定数量的`GameplayEffect`堆栈(Stack).
+
+`CAR`还有很多高阶功能, 像检查该`GameplayEffect`的实例是否已经位于目标上和修改当前实例的持续时间而不是应用一个新的实例(对`CanApplyGameplayEffect()`返回false).
+
+#### 4.5.14 花费(Cost)GameplayEffect
+
+`GameplayAbility`有一个特别设计用来作为Ability花费(Cost)的可选`GameplayEffect`. 花费(Cost)是指`ASC`激活`GameplayAbility`所需必要的`Attribute`量. 如果某个`GA`不能提供`花费GE`, 那么它们就不能被激活. 该`花费GE`应该是某个带有一个或多个自`Attribute`减修改器的`即刻(Instant)GameplayEffect`. 默认情况下, `花费GE`是可以被预测的, 并且建议保留该功能, 也就是不要使用`ExecutionCalculations`, `MMC`对于复杂的花费计算是完美适配并且鼓励使用的.  
+
+开始的时候, 你通常会为每个有花费的`GA`都设置一个独一无二的`花费GE`, 一个更高阶的技巧是对多个`GA`复用一个`花费GE`, 只需修改自`GA`的`花费GE`创建的`GameplayEffectSpec`中指定的数据(定义在`GA`的花费值), **这只作用于`实例化(Instanced)`的Ability.**  
+
+复用`花费GE`的两种技巧:  
+
+1. 使用`MMC`. 这是最简单的方式. 创建一个从`GameplayAbility`实例读取花费值的`MMC`, 你可以从`GameplayEffectSpec`中获取到该实例.  
+
+```c++
+float UPGMMC_HeroAbilityCost::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec & Spec) const
+{
+	const UPGGameplayAbility* Ability = Cast<UPGGameplayAbility>(Spec.GetContext().GetAbilityInstance_NotReplicated());
+
+	if (!Ability)
+	{
+		return 0.0f;
+	}
+
+	return Ability->Cost.GetValueAtLevel(Ability->GetAbilityLevel());
+}
+```
+
+在这个例子中, 花费值是一个我添加到`GameplayAbility`子类上的`FScalableFloat`.  
+
+```c++
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cost")
+FScalableFloat Cost;
+```
+
+![Cost GE With MMC]()
+
+2. **重写`UGameplayAbility::GetCostGameplayEffect()`.** 重写该函数并在运行时创建一个用来读取`GameplayAbility`中花费值的`GameplayEffect`.  
+
+#### 4.5.15 冷却(Cooldown)GameplayEffect
+
+`GameplayAbility`有一个特别设计用来作为Ability冷却(Cooldown)的可选`GameplayEffect`. 冷却时间决定了激活Ability之后多久可以再次激活. 如果某个`GA`在冷却中, 那么它就不能被激活. 该`冷却GE`应该是一个不带有`修改器`的`持续(Duration)GameplayEffect`, 并且在`GameplayEffect`的`GrantedTags`中每个`GameplayAbility`或Ability插槽(Slot)(如果你的游戏有分配到插槽的可交换Ability且共享一个冷却)都有一个独一无二的`GameplayTag`(`Cooldown Tag`). `GA`实际上会检查`Cooldown Tag`的存在而不是`Cooldown GE`的存在, 默认情况下, `冷却GE`是可以被预测的, 并且建议保留该功能, 也就是不要使用`ExecutionCalculations`, `MMC`对于复杂的花费计算是完美适配并且鼓励使用的.  
+
+开始的时候, 你通常会为每个有冷却的`GA`都设置一个独一无二的`冷却GE`, 一个更高阶的技巧是对多个`GA`复用一个`冷却GE`, 只需修改自`GA`的`冷却GE`创建的`GameplayEffectSpec`中指定的数据(冷却时间和定义在`GA`的`Cooldown Tag`), **这只作用于`实例化(Instanced)`的Ability.**  
+
+复用`冷却GE`的两种技巧:  
+
+1. 使用`SetByCaller`. 这是最简单的方式. 使用一个`GameplayTag`设置共享`冷却GE`的持续时间到`SetByCaller`. 在`GameplayAbility`子类中, 为持续时间定义一个浮点/`FScalableFloat`, 为独一无二的`Cooldown Tag`定义一个`FGameplayTagContainer`和一个临时`FGameplayTagContainer`, 其用来作为`Cooldown Tag`与`冷却GE`的标签的并集的返回指针.  
+
+```c++
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cooldown")
+FScalableFloat CooldownDuration;
+
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cooldown")
+FGameplayTagContainer CooldownTags;
+
+// Temp container that we will return the pointer to in GetCooldownTags().
+// This will be a union of our CooldownTags and the Cooldown GE's cooldown tags.
+UPROPERTY()
+FGameplayTagContainer TempCooldownTags;
+```
+
+之后重写`UGameplayAbility::GetCooldownTags()`以返回`Cooldown Tag`和所有现存`冷却GE`的标签的并集.  
+
+```c++
+const FGameplayTagContainer * UPGGameplayAbility::GetCooldownTags() const
+{
+	FGameplayTagContainer* MutableTags = const_cast<FGameplayTagContainer*>(&TempCooldownTags);
+	const FGameplayTagContainer* ParentTags = Super::GetCooldownTags();
+	if (ParentTags)
+	{
+		MutableTags->AppendTags(*ParentTags);
+	}
+	MutableTags->AppendTags(CooldownTags);
+	return MutableTags;
+}
+```
+
+最后, 重写`UGameplayAbility::ApplyCooldown()`以注入我们自己的`Cooldown Tag`和将`SetByCaller`添加到冷却`GameplayEffectSpec`.  
+
+```c++
+void UPGGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo * ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	UGameplayEffect* CooldownGE = GetCooldownGameplayEffect();
+	if (CooldownGE)
+	{
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGE->GetClass(), GetAbilityLevel());
+		SpecHandle.Data.Get()->DynamicGrantedTags.AppendTags(CooldownTags);
+		SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName(  OurSetByCallerTag  )), CooldownDuration.GetValueAtLevel(GetAbilityLevel()));
+		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+	}
+}
+```
+
+在这个图片中, 冷却的持续时间`修改器`被设置为带有一个`Data.Cooldown`的`Data Tag`的`SetByCaller`. `Data.Cooldown`就是上面代码中的`OurSetByCallerTag`.  
+
+![Cooldown GE with SetByCaller]()  
+
+2. 使用`MMC`. 它的设置与上文所提的一致, 除了不需要在`Cooldown GE`和`ApplyCost`中设置`SetByCaller`作为持续时间, 相反, 我们需要将持续时间设置为一个指向新`MMC`的`Custom Calculation类`.  
+
+```c++
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cooldown")
+FScalableFloat CooldownDuration;
+
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cooldown")
+FGameplayTagContainer CooldownTags;
+
+// Temp container that we will return the pointer to in GetCooldownTags().
+// This will be a union of our CooldownTags and the Cooldown GE's cooldown tags.
+UPROPERTY()
+FGameplayTagContainer TempCooldownTags;
+```
+
+之后重写`UGameplayAbility::GetCooldownTags()`以返回`Cooldown标签`的集合和任何现存`Cooldown GE`的标签.  
+
+```c++
+const FGameplayTagContainer * UPGGameplayAbility::GetCooldownTags() const
+{
+	FGameplayTagContainer* MutableTags = const_cast<FGameplayTagContainer*>(&TempCooldownTags);
+	const FGameplayTagContainer* ParentTags = Super::GetCooldownTags();
+	if (ParentTags)
+	{
+		MutableTags->AppendTags(*ParentTags);
+	}
+	MutableTags->AppendTags(CooldownTags);
+	return MutableTags;
+}
+```
+
+最后, 重写`UGameplayAbility::ApplyCooldown()`将我们的`Cooldown标签`注入`Cooldown GameplayEffectSpec`.  
+
+```c++
+void UPGGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo * ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	UGameplayEffect* CooldownGE = GetCooldownGameplayEffect();
+	if (CooldownGE)
+	{
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGE->GetClass(), GetAbilityLevel());
+		SpecHandle.Data.Get()->DynamicGrantedTags.AppendTags(CooldownTags);
+		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+	}
+}
+```
+
+```c++
+float UPGMMC_HeroAbilityCooldown::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec & Spec) const
+{
+	const UPGGameplayAbility* Ability = Cast<UPGGameplayAbility>(Spec.GetContext().GetAbilityInstance_NotReplicated());
+
+	if (!Ability)
+	{
+		return 0.0f;
+	}
+
+	return Ability->CooldownDuration.GetValueAtLevel(Ability->GetAbilityLevel());
+}
+```
+
+![Cooldown GE with MMC]()  
+
+##### 4.5.15.1 获取Cooldown GameplayEffect的剩余时间
+
+```c++
+bool APGPlayerState::GetCooldownRemainingForTag(FGameplayTagContainer CooldownTags, float & TimeRemaining, float & CooldownDuration)
+{
+	if (AbilitySystemComponent && CooldownTags.Num() > 0)
+	{
+		TimeRemaining = 0.f;
+		CooldownDuration = 0.f;
+
+		FGameplayEffectQuery const Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(CooldownTags);
+		TArray< TPair<float, float> > DurationAndTimeRemaining = AbilitySystemComponent->GetActiveEffectsTimeRemainingAndDuration(Query);
+		if (DurationAndTimeRemaining.Num() > 0)
+		{
+			int32 BestIdx = 0;
+			float LongestTime = DurationAndTimeRemaining[0].Key;
+			for (int32 Idx = 1; Idx < DurationAndTimeRemaining.Num(); ++Idx)
+			{
+				if (DurationAndTimeRemaining[Idx].Key > LongestTime)
+				{
+					LongestTime = DurationAndTimeRemaining[Idx].Key;
+					BestIdx = Idx;
+				}
+			}
+
+			TimeRemaining = DurationAndTimeRemaining[BestIdx].Key;
+			CooldownDuration = DurationAndTimeRemaining[BestIdx].Value;
+
+			return true;
+		}
+	}
+
+	return false;
+}
+```
+
+**Note:** 在客户端上查询剩余冷却时间要求其可以接收同步的`GameplayEffect`, 这依赖于它们`ASC`的同步模式.  
+
+##### 4.5.15.2 监听冷却开始和结束
+
+为了监听某个冷却何时开始, 你可以通过绑定`AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf`或者`AbilitySystemComponent->RegisterGameplayTagEvent(CooldownTag, EGameplayTagEventType::NewOrRemoved)`分别在`Cooldown GE`应用和`Cooldown Tag`添加时作出响应. 我建议监听`Cooldown GE`何时应用, 因为这时还可以访问应用它的`GameplayEffectSpec`. 由此你可以确定当前`Cooldown GE`是客户端预测的还是由服务端校正的.  
+
+为了监听某个冷却何时结束, 你可以通过绑定`AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate()`或者`AbilitySystemComponent->RegisterGameplayTagEvent(CooldownTag, EGameplayTagEventType::NewOrRemoved)`分别在`Cooldown GE`移除和`Cooldown Tag`移除时作出响应. 我建议监听`Cooldown Tag`何时移除, 因为当服务端校正的`Cooldown GE`到来时, 会移除客户端预测的`Cooldown GE`, 这会响应`OnAnyGameplayEffectRemovedDelegate()`, 即使仍处于冷却过程中. 预测的`Cooldown GE`移除期间和服务端校正的`Cooldown GE`应用期间`Cooldown Tag`都不会改变.  
+
+**Note:** 在客户端上监听某个`GameplayEffect`添加或移除要求其可以接收同步的`GameplayEffect`, 这依赖于它们`ASC`的同步模式.  
+
+样例项目包含一个用于监听冷却开始和结束的自定义蓝图节点, HUD UMG Widget使用它来更新陨石技能的冷却时间剩余量, 该`AsyncTask`会一直响应直到手动调用`EndTask()`, 就像在UMG Widget的`Destruct`事件中调用那样. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
+
+![Listen for Cooldown Change BP Node]()  
+
+##### 4.5.15.3 预测冷却时间
+
+冷却时间目前不是真正可预测的. 我们可以在客户端预测的`Cooldown GE`应用时启动UI的冷却时间计时器, 但是`GameplayAbility`的实际冷却时间是由服务端的冷却时间剩余决定的. 基于玩家的延迟情况, 客户端预测的冷却可能已经结束, 但是服务端上的`GameplayAbility`仍处于冷却过程, 这会阻止`GameplayAbility`的即刻再激活直到服务端冷却结束.  
+
+样例项目通过在客户端预测的冷却开始时灰化陨石技能的图标, 之后在服务端校正的`Cooldown GE`到来时启动冷却计时器处理该问题.  
+
+在实际游戏中导致的结果就是高延迟的玩家相比低延迟的玩家对冷却时间短的技能有更低的触发率, 从而处于劣势, Fortnite通过使其武器拥有无需使用冷却`GameplayEffect`的自定义簿记(Bookkeeping)而避免该现象.  
+
+Epic希望在未来的GAS迭代中实现真正的冷却预测(玩家可以激活一个在客户端冷却完成但服务端仍处于冷却过程的`GameplayAbility`).  
+
+#### 4.5.16 修改已激活GameplayEffect的持续时间
+
+为了修改`Cooldown GE`或其他任何`持续(Duration)`GameplayEffect的剩余时间, 我们需要修改`GameplayEffectSpec`的持续时间, 更新它的`StartServerWorldTime`, `CachedStartServerWorldTime`, `StartWorldTime`并且使用`CheckDuration()`返回对持续时间的检查. 在服务端上完成这些操作并且将`FActiveGameplayEffect`标记为dirty会将这些修改同步到客户端. **Note:** 该操作包含一个`const_cast`, 这可能不是`Epic`希望的修改持续时间的方法, 但是迄今为止它看起来运行得很好.  
+
+```c++
+bool UPAAbilitySystemComponent::SetGameplayEffectDurationHandle(FActiveGameplayEffectHandle Handle, float NewDuration)
+{
+	if (!Handle.IsValid())
+	{
+		return false;
+	}
+
+	const FActiveGameplayEffect* ActiveGameplayEffect = GetActiveGameplayEffect(Handle);
+	if (!ActiveGameplayEffect)
+	{
+		return false;
+	}
+
+	FActiveGameplayEffect* AGE = const_cast<FActiveGameplayEffect*>(ActiveGameplayEffect);
+	if (NewDuration > 0)
+	{
+		AGE->Spec.Duration = NewDuration;
+	}
+	else
+	{
+		AGE->Spec.Duration = 0.01f;
+	}
+
+	AGE->StartServerWorldTime = ActiveGameplayEffects.GetServerWorldTime();
+	AGE->CachedStartServerWorldTime = AGE->StartServerWorldTime;
+	AGE->StartWorldTime = ActiveGameplayEffects.GetWorldTime();
+	ActiveGameplayEffects.MarkItemDirty(*AGE);
+	ActiveGameplayEffects.CheckDuration(Handle);
+
+	AGE->EventSet.OnTimeChanged.Broadcast(AGE->Handle, AGE->StartWorldTime, AGE->GetDuration());
+	OnGameplayEffectDurationChange(*AGE);
+
+	return true;
+}
+```
+
+#### 4.5.17 在运行时创建动态`GameplayEffect`
+
+在运行时创建动态`GameplayEffect`是一个高阶技术, 你不必经常使用它.  
+
+只有`即刻(Instant)GameplayEffect`可以在运行时由C++创建, `持续(Duration)`和`无限(Infinite)`GameplayEffect不能在运行时动态创建, 因为它们在同步时会寻找并不存在的`GameplayEffect`类定义. 为了实现该功能, 你应该创建一个原型`GameplayEffect`类, 就像平时在编辑器中做的那样, 之后根据运行时所需来定制化`GameplayEffectSpec`.  
+
+运行时创建的`即刻(Instant)GameplayEffect`也可以在客户端预测的`GameplayAbility`中调用. 然而, 目前还不明确动态创建是否有副作用.  
+
+样例项目会在`AttributeSet`受到致命打击时创建该`GameplayEffect`来将金币和经验点数返还给角色击杀者.  
+
+```c++
+// Create a dynamic instant Gameplay Effect to give the bounties
+UGameplayEffect* GEBounty = NewObject<UGameplayEffect>(GetTransientPackage(), FName(TEXT("Bounty")));
+GEBounty->DurationPolicy = EGameplayEffectDurationType::Instant;
+
+int32 Idx = GEBounty->Modifiers.Num();
+GEBounty->Modifiers.SetNum(Idx + 2);
+
+FGameplayModifierInfo& InfoXP = GEBounty->Modifiers[Idx];
+InfoXP.ModifierMagnitude = FScalableFloat(GetXPBounty());
+InfoXP.ModifierOp = EGameplayModOp::Additive;
+InfoXP.Attribute = UGDAttributeSetBase::GetXPAttribute();
+
+FGameplayModifierInfo& InfoGold = GEBounty->Modifiers[Idx + 1];
+InfoGold.ModifierMagnitude = FScalableFloat(GetGoldBounty());
+InfoGold.ModifierOp = EGameplayModOp::Additive;
+InfoGold.Attribute = UGDAttributeSetBase::GetGoldAttribute();
+
+Source->ApplyGameplayEffectToSelf(GEBounty, 1.0f, Source->MakeEffectContext());
+```
+
+第二个样例展示了在一个客户端预测的`GameplayAbility`中创建运行时`GameplayEffect`, 使用风险自负(查看代码中的注释)!
+
+```c++
+UGameplayAbilityRuntimeGE::UGameplayAbilityRuntimeGE()
+{
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
+}
+
+void UGameplayAbilityRuntimeGE::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+	if (HasAuthorityOrPredictionKey(ActorInfo, &ActivationInfo))
+	{
+		if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		}
+
+		// Create the GE at runtime.
+		UGameplayEffect* GameplayEffect = NewObject<UGameplayEffect>(GetTransientPackage(), TEXT("RuntimeInstantGE"));
+		GameplayEffect->DurationPolicy = EGameplayEffectDurationType::Instant; // Only instant works with runtime GE.
+
+		// Add a simple scalable float modifier, which overrides MyAttribute with 42.
+		// In real world applications, consume information passed via TriggerEventData.
+		const int32 Idx = GameplayEffect->Modifiers.Num();
+		GameplayEffect->Modifiers.SetNum(Idx + 1);
+		FGameplayModifierInfo& ModifierInfo = GameplayEffect->Modifiers[Idx];
+		ModifierInfo.Attribute.SetUProperty(UMyAttributeSet::GetMyModifiedAttribute());
+		ModifierInfo.ModifierMagnitude = FScalableFloat(42.f);
+		ModifierInfo.ModifierOp = EGameplayModOp::Override;
+
+		// Apply the GE.
+
+		// Create the GESpec here to avoid the behavior of ASC to create GESpecs from the GE class default object.
+		// Since we have a dynamic GE here, this would create a GESpec with the base GameplayEffect class, so we
+		// would lose our modifiers. Attention: It is unknown, if this "hack" done here can have drawbacks!
+		// The spec prevents the GE object being collected by the GarbageCollector, since the GE is a UPROPERTY on the spec.
+		FGameplayEffectSpec* GESpec = new FGameplayEffectSpec(GameplayEffect, {}, 0.f); // "new", since lifetime is managed by a shared ptr within the handle
+		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, FGameplayEffectSpecHandle(GESpec));
+	}
+	EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+}
+```
+
+#### 4.5.18 GameplayEffect Containers
+
+Epic的Action RPG样例项目实现了一个名为`FGameplayEffectContainer`的结构体, 它不存于原生GAS, 但是对于包含`GameplayEffect`和`TargetData`极其好用, 它会使一些过程自动化, 比如从`GameplayEffect`中创建`GameplayEffectSpec`并在其`GameplayEffectContext`中设置默认值. 在`GameplayAbility`中创建`GameplayEffectContainer`并将其传递给已生成的投掷物是非常简单和显而易见的, 然而我选择在样例项目中不实现`GameplayEffectContainer`, 因为我想向你展示的是没有它的原生GAS, 但是我高度建议你研究一下它并将其纳入到你的项目中.  
+
+为了访问`GameplayEffectContainer`中的`GESpec`做一些诸如添加`SetByCaller`的操作, 请使用`FGameplayEffectContainer`结构体中的`GESpec`数组索引访问`GESpec`引用, 这要求你需要提前知道想要访问的`GESpec`的索引.  
+
+![SetByCaller with a GameplayEffectContainer]()  
+
+`GameplayEffectContainer` also contain an optional efficient means of targeting.  
+
+### 4.6 Gameplay Abilities
+
+#### 4.6.1 GameplayAbility 定义
+
+`GameplayAbility(GA)`是Actor在游戏中可以触发的任何行为和技能. 多个`GameplayAbility`可以在同一时刻激活, 例如奔跑和射击. 其可由蓝图或C++完成.  
+
+`GameplayAbility`示例:  
+
+* 跳跃
+* 奔跑
+* 射击
+* 每X秒被动地阻挡一次攻击
+* 使用药剂
+* 开门
+* 收集资源
+* 建造
+
+不应该使用`GameplayAbility`的场景:  
+
+* 基础移动输入
+* 一些与UI的交互 - 不要使用`GameplayAbility`从商店中购买物品
+
+这些不是规定, 只是我的建议而已, 你的设计和实现可能是多样的.  
 
 
