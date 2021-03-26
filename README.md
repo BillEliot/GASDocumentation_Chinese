@@ -160,10 +160,10 @@
 * [10. ASC常用术语缩略](#acronyms)
 * [11. 其他资源](#resources)
 * [12. GAS更新日志](#changelog)
-+ [12.1 4.26](#changelog-4.26)
-+ [12.1 4.25.1](#changelog-4.25.1)
-+ [12.1 4.25](#changelog-4.25)
-+ [12.1 4.24](#changelog-4.24)
+	+ [12.1 4.26](#changelog-4.26)
+	+ [12.2 4.25.1](#changelog-4.25.1)
+	+ [12.3 4.25](#changelog-4.25)
+	+ [12.4 4.24](#changelog-4.24)
 
 ---
 
@@ -420,7 +420,7 @@ void AGDHeroCharacter::OnRep_PlayerState()
 
 当给某个对象设置标签时, 如果它有`ASC`的话, 我们一般添加标签到`ASC`, 因此GAS可以与其交互. UAbilitySystemComponent执行`IGameplayTagAssetInterface`接口的函数来访问其拥有的`GameplayTag`.  
 
-多个`GameplayTag`可被保存于一个`F`GameplayTagContainer``中, 相比`TArray<FGameplayTag>`, 最好使用`GameplayTagContainer`, 因为`GameplayTagContainer`做了一些很有效率的优化. 因为标签是标准的`FName`, 所以当在project setting中启用`Fast Replication`后, 它们可以高效地打包进`F`GameplayTagContainer``以用于同步. `Fast Replication`要求服务端和客户端有相同的`GameplayTag`列表, 这通常不是问题, 因此你应该启用该选项. `GameplayTagContainer`也可以返回`TArray<FGameplayTag>`以用于遍历.  
+多个`GameplayTag`可被保存于一个`FGameplayTagContainer`中, 相比`TArray<FGameplayTag>`, 最好使用`GameplayTagContainer`, 因为`GameplayTagContainer`做了一些很有效率的优化. 因为标签是标准的`FName`, 所以当在project setting中启用`Fast Replication`后, 它们可以高效地打包进`FGameplayTagContainer`以用于同步. `Fast Replication`要求服务端和客户端有相同的`GameplayTag`列表, 这通常不是问题, 因此你应该启用该选项. `GameplayTagContainer`也可以返回`TArray<FGameplayTag>`以用于遍历.  
 
 保存于`FGameplayTagCountContainer`的`GameplayTag`有一个保存该`GameplayTag`实例数的`TagMap`. FGameplayTagCountContainer可能存有`TagMapCount`为0的`GameplayTag`, 如果`ASC`仍有一个`GameplayTag`, 你可能在Debug时遇到这种情况. 任何`HasTag()`或`HasMatchingTag()`或其他相似的函数会检查`TagMapCount`, 如果`GameplayTag`不存在或者其`TagMapCount`为0就会返回false.  
 
@@ -649,9 +649,9 @@ void AGSWeapon::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracke
 ```c++
 void AGSWeapon::BeginPlay()
 {
-	if (!`AttributeSet`)
+	if (!AttributeSet)
 	{
-		`AttributeSet` = NewObject<UGSWeaponAttributeSet>(this);
+		AttributeSet = NewObject<UGSWeaponAttributeSet>(this);
 	}
 	//...
 }
@@ -699,7 +699,7 @@ void AGSWeapon::BeginPlay()
 **Attribute只能使用C++在AttributeSet头文件中定义.** 建议把下面这个宏块加到每个`AttributeSet`头文件的顶部, 其会自动为每个`Attribute`生成getter和setter函数.  
 
 ```c++
-// Uses macros from `AttributeSet`.h
+// Uses macros from AttributeSet.h
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
 	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
@@ -758,7 +758,7 @@ void UGDAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 如果在定义`Attribute`时使用了ATTRIBUTE_ACCESSORS宏, 那么在`AttributeSet`中会自动为每个`Attribute`生成一个初始化函数.  
 
 ```c++
-// InitHealth(float InitialValue) is an automatically generated function for an `Attribute` 'Health' defined with the `ATTRIBUTE_ACCESSORS` macro
+// InitHealth(float InitialValue) is an automatically generated function for an Attribute 'Health' defined with the `ATTRIBUTE_ACCESSORS` macro
 AttributeSet->InitHealth(100.0f);
 ```
 
@@ -775,7 +775,7 @@ AttributeSet->InitHealth(100.0f);
 
 例如像样例项目那样限制移动速度`Modifier`:  
 ```c++
-if (`Attribute` == GetMoveSpeedAttribute())
+if (Attribute == GetMoveSpeedAttribute())
 {
 	// Cannot slow less than 150 units/s and cannot boost more than 1000 units/s
 	NewValue = FMath::Clamp<float>(NewValue, 150, 1000);
@@ -1220,7 +1220,7 @@ GASShooter使用了一个子结构体`GameplayEffectContext`来添加可以在`G
 |快照|Source或Target|在GameplayEffectSpec中捕获|Attribute被无限(Infinite)或持续(Duration)GameplayEffect修改时自动更新|
 |:-:|:-:|:-:|:-:|
 |是|Source|创建|否|
-|是|Target|应用(译者注: 结合上文说明, 译者猜测此处应该为"创建", 系作者笔误.)|否|
+|是|Target|应用(译者注: 结合上文说明, 译者猜测此处应该为"创建", 系作者笔误, 如有错误, 请尽快告知我.)|否|
 |否|Source|应用|是|
 |否|Target|应用|是|
 
@@ -1295,9 +1295,9 @@ float UPAMMC_PoisonMana::CalculateBaseMagnitude_Implementation(const FGameplayEf
 当`GameplayEffectSpec`创建时, 快照(Snapshotting)会捕获`Attribute`, 而当`GameplayEffectSpec`应用时, 非快照会捕获`Attribute`. 捕获`Attribute`会自`ASC`的现有Modifier重新计算它们的`CurrentValue`, 该重新计算**不会**执行`AbilitySet`中的[PreAttributeChange()](#concepts-as-preattributechange), 因此所有的限制操作(Clamp)必须在这里重新处理.  
 
 |快照|Source或Target|在GameplayEffectSpec中捕获|
-|:-:|:-:|:-:|:-:|
+|:-:|:-:|:-:|
 |是|Source|创建|
-|是|Target|应用(译者注: 结合上文说明, 译者猜测此处应该为"创建", 系作者笔误.)|
+|是|Target|应用(译者注: 结合上文说明, 译者猜测此处应该为"创建", 系作者笔误, 如有错误, 请尽快告知我.)|
 |否|Source|应用|
 |否|Target|应用|
 
@@ -2383,7 +2383,7 @@ GAS自带的`AbilityTask`可以使用挂载在`CharacterMovementComponent`中的
 有两个`GameplayCueNotify`类, `Static`和`Actor`. 它们各自响应不同的事件, 并且不同的`GameplayEffect`类型可以触发它们. 根据你的逻辑重写相关的事件.  
 
 |GameplayCue类|事件|GameplayEffect类型|描述|
-|:-:|:-:||:-:|:-:|
+|:-:|:-:|:-:|:-:|
 |[GameplayCueNotify_Static](https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/UGameplayCueNotify_Static/index.html)|Execute|Instant或Periodic|`Static GameplayCueNotify`直接操作`ClassDefaultObject`(意味着没有实例)并且对于一次性效果(像击打伤害)是极好的.|
 |[GameplayCueNotify_Actor](https://docs.unrealengine.com/en-US/BlueprintAPI/GameplayCueNotify/index.html)|Add或Remove|Duration或Infinite|`Actor GameplayCueNotify`会在添加(Added)时生成一个新的实例, 因为其是实例化的, 所以可以随时间推移执行操作直到被移除(Removed). 这对循环的声音和粒子效果是很好的, 其会在`持续(Duration)`或`无限(Infinite)`GameplayEffect被移除或手动调用移除时移除. 其也自带选项来管理允许同时添加(Added)多少个, 因此多个相同效果的应用只启用一次声音或例子效果.|
 
@@ -2562,7 +2562,7 @@ virtual bool ShouldAsyncLoadRuntimeObjectLibraries() const override
 
 该方法也可以在你的`GameplayCue`需要特别指定的参数时使用, 这些需要特别指定的参数不能由`GameplayCueParameter`提供, 并且你不想将它们添加到`EffectContext`, 像伤害数值, 暴击标识, 破盾标识, 处决标识等等.  
 
-![https://forums.unrealengine.com/development-discussion/c-gameplay-programming/1711546-fscopedgameplaycuesendcontext-gameplaycuemanager](https://forums.unrealengine.com/development-discussion/c-gameplay-programming/1711546-fscopedgameplaycuesendcontext-gameplaycuemanager)  
+[https://forums.unrealengine.com/development-discussion/c-gameplay-programming/1711546-fscopedgameplaycuesendcontext-gameplaycuemanager](https://forums.unrealengine.com/development-discussion/c-gameplay-programming/1711546-fscopedgameplaycuesendcontext-gameplaycuemanager)  
 
 **[⬆ 返回目录](#table-of-contents)**
 
