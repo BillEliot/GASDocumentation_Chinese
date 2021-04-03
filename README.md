@@ -292,7 +292,7 @@ AI控制的小兵没有预先定义的`GameplayAbility`. 红方小兵有较多�
 
 **Note:** 如果`ASC`位于PlayerState, 那么你需要提高PlayerState的`NetUpdateFrequency`, 其默认是一个很低的值, 因此在客户端上发生`Attribute`和`GameplayTag`改变时会造成延迟或卡顿. 确保启用[Adaptive Network Update Frequency](https://docs.unrealengine.com/en-US/Gameplay/Networking/Actors/Properties/index.html#adaptivenetworkupdatefrequency), Fortnite就启用了该项.  
 
-如果OwnerActor和AvatarActor是不同的Actor, 应该实现`IAbilitySystemInterface`, 该接口有一个必须重写的函数, `UAbilitySystemComponent* GetAbilitySystemComponent() const`, 其返回一个指向`ASC`的指针, `ASC`通过寻找该接口函数来和系统内部进行交互.  
+OwnerActor需要继承并实现`IAbilitySystemInterface`, 如果AvatarActor和OwnerActor是不同的Actor, 那么AvatarActor也应该继承并实现`IAbilitySystemInterface`. 该接口有一个必须重写的函数, `UAbilitySystemComponent* GetAbilitySystemComponent() const`, 其返回一个指向`ASC`的指针, `ASC`通过寻找该接口函数来和系统内部进行交互.  
 
 `ASC`在`FActiveGameplayEffectContainer ActiveGameplayEffect`中保存其当前活跃的`GameplayEffect`.  
 
