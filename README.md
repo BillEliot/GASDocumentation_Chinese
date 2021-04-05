@@ -490,20 +490,20 @@ virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
 一个`Attribute`是由两个值 —— 一个`BaseValue`和一个`CurrentValue`组成的, `BaseValue`是`Attribute`的永久值而`CurrentValue`是`BaseValue`加上`GameplayEffect`给的临时修改值后得到的. 例如, 你的Character可能有一个`BaseValue`为600u/s的移动速度`Attribute`, 因为还没有`GameplayEffect`修改移动速度, 所以`CurrentValue`也是600u/s, 如果Character获得了一个临时50u/s的移动速度加成, 那么`BaseValue`仍然是600u/s而`CurrentValue`是600+50=650u/s, 当该移动速度加成消失后, `CurrentValue`就会变回`BaseValue`的600u/s.  
 
-初识GAS的新手经常将`BaseValue`误认为`Attribute`的最大值并以这样的认识去编码, 这是错误的, 可以改变或引用在Ability/UI中的`Attribute`最大值应该是另外单独的`Attribute`. 对于硬编码的最大值和最小值, 有一种方法是使用可以设置最大值和最小值的`FAttributeMetaData`定义一个DataTable, 但是Epic在该结构体上的注释称之为"work in progress", 参阅`AttributeSet.h`获得更多信息. 为了避免这种疑惑, 我建议引用在Ability或UI中的最大值应该单独定义`Attribute`, 只用于限制(Clamp)`Attribute`大小的硬编码最大值和最小值应该在`AttributeSet`中定义为硬编码浮点值. 关于`Attribute`值的限制(Clamp)在[PreAttributeChange()](#concepts-as-preattributechange)中讨论了修改CurrentValue, 在[PostGameplayEffectExecute()](#concepts-as-postgameplayeffectexecute)中讨论了修改`GameplayEffect`的`BaseValue`.  
+初识GAS的新手经常将`BaseValue`误认为`Attribute`的最大值并以这样的认识去编程, 这是错误的, 可以修改或引用的Ability/UI中的`Attribute`最大值应该是另外单独的`Attribute`. 对于硬编码的最大值和最小值, 有一种方法是使用可以设置最大值和最小值的`FAttributeMetaData`定义一个DataTable, 但是Epic在该结构体上的注释称之为"work in progress", 详见`AttributeSet.h`. 为了避免这种疑惑, 我建议引用在Ability或UI中的最大值应该单独定义`Attribute`, 只用于限制(Clamp)`Attribute`大小的硬编码最大值和最小值应该在`AttributeSet`中定义为硬编码浮点值. 关于限制(Clamp)`Attribute`值的问题在[PreAttributeChange()](#concepts-as-preattributechange)中讨论了CurrentValue的修改, 在[PostGameplayEffectExecute()](#concepts-as-postgameplayeffectexecute)中讨论了`GameplayEffect`对`BaseValue`的修改.  
 
-`即刻(Instant)GameplayEffect`可以永久性的修改`BaseValue`, 而`持续(Duration)`和`无限(Infinite)GameplayEffect`可以修改CurrentValue. 周期性(Periodic)`GameplayEffect`被视为`GameplayEffect`实例并且可以修改`BaseValue`.  
+`即刻(Instant)GameplayEffect`可以永久性的修改`BaseValue`, 而`持续(Duration)`和`无限(Infinite)GameplayEffect`可以修改CurrentValue. 周期性(Periodic)`GameplayEffect`被视为`即刻(Instant)GameplayEffect`并且可以修改`BaseValue`.  
 
 **[⬆ 返回目录](#table-of-contents)**
 
 <a name="concepts-a-meta"></a>
 #### 4.3.3 元(Meta)Attribute
 
-一些`Attribute`被视为占位符, 其用于预计和`Attribute`交互的临时值, 这些`Attribute`被叫做`Meta Attribute`. 例如, 我们通常定义伤害值为`Meta Attribute`, 使用伤害值`Meta Attribute`作为占位符, 而不是使用`GameplayEffect`直接修改生命值`Attribute`, 使用这种方法, 伤害值就可以在[GameplayEffectExecutionCalculation](#concepts-ge-ec)中由buff和debuff修改, 并且可以在`AttributeSet`中进一步操作, 例如, 在最终将生命值减去伤害值之前, 要将伤害值减去当前的护盾值. 伤害值`Meta Attribute`在`GameplayEffect`之间不是持久化的, 并且可以被任何一方重写. `Meta Attribute`一般是不可同步的.  
+一些`Attribute`被视为占位符, 其是用于预计和`Attribute`交互的临时值, 这些`Attribute`被叫做`Meta Attribute`. 例如, 我们通常定义伤害值为`Meta Attribute`, 使用伤害值`Meta Attribute`作为占位符, 而不是使用`GameplayEffect`直接修改生命值`Attribute`, 使用这种方法, 伤害值就可以在[GameplayEffectExecutionCalculation](#concepts-ge-ec)中由buff和debuff修改, 并且可以在`AttributeSet`中进一步操作, 例如, 在最终将生命值减去伤害值之前, 要将伤害值减去当前的护盾值. 伤害值`Meta Attribute`在`GameplayEffect`之间不是持久化的, 并且可以被任何一方重写. `Meta Attribute`一般是不可同步的.  
 
 `Meta Attribute`对于在"我们应该造成多少伤害?"和"我们该如何处理伤害值?"这种问题之中的伤害值和治疗值做了很好的解构, 这种解构意味着`GameplayEffect`和`ExecutionCalculation`无需了解目标是如何处理伤害值的. 继续看伤害值的例子, `GameplayEffect`确定造成多少伤害, 之后`AttributeSet`决定如何使用该伤害值, 不是所有的Character都有相同的`Attribute`, 特别是使用了`AttributeSet`子类的话, `AttributeSet`基类可能只有一个生命值`Attribute`, 但是它的子类可能增加了一个护盾值`Attribute`, 拥有护盾值`Attribute`的子类`AttributeSet`可能会以不同于`AttributeSet`基类的方式分配收到的伤害.  
 
-尽管`Meta Attribute`是一个很好的设计模式, 但它们并不是强制使用的. 如果你只有一个用于所有伤害实例的`Execution Calculation`和一个所有Character共用的`AttributeSet`类, 那么你就可以在`Exeuction Calculation`中分配伤害到生命, 护盾等等, 并直接修改那些`Attribute`, 这种方式你只会丢失灵活性, 但总体上并无大碍.  
+尽管`Meta Attribute`是一个很好的设计模式, 但其并不是强制使用的. 如果你只有一个用于所有伤害实例的`Execution Calculation`和一个所有Character共用的`AttributeSet`类, 那么你就可以在`Exeuction Calculation`中分配伤害到生命, 护盾等等, 并直接修改那些`Attribute`, 这种方式你只会丢失灵活性, 但总体上并无大碍.  
 
 **[⬆ 返回目录](#table-of-contents)**
 
@@ -722,7 +722,7 @@ UFUNCTION()
 virtual void OnRep_Health(const FGameplayAttributeData& OldHealth);
 ```
 
-`AttributeSet`的.cpp文件应该用预测系统(prediction system)使用的`GAMEPLAYATTRIBUTE_REPNOTIFY`宏填充OnRep函数:  
+`AttributeSet`的.cpp文件应该用预测系统(Prediction System)使用的`GAMEPLAYATTRIBUTE_REPNOTIFY`宏填充OnRep函数:  
 
 ```c++
 void UGDAttributeSetBase::OnRep_Health(const FGameplayAttributeData& OldHealth)
@@ -771,7 +771,7 @@ AttributeSet->InitHealth(100.0f);
 <a name="concepts-as-preattributechange"></a>
 #### 4.4.5 PreAttributeChange()
 
-`PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)`是`AttributeSet`中主要的函数之一, 其在变化发生前响应`Attribute`的CurrentValue的变化, 其是通过引用参数NewValue限制(Clamp)CurrentValue即将发生的改变的理想位置.  
+`PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)`是`AttributeSet`中的主要函数之一, 其在修改发生前响应`Attribute`的CurrentValue变化, 其是通过引用参数NewValue限制(Clamp)CurrentValue即将进行的修改的理想位置.  
 
 例如像样例项目那样限制移动速度`Modifier`:  
 ```c++
@@ -782,26 +782,26 @@ if (Attribute == GetMoveSpeedAttribute())
 }
 ```
 
-`GetMoveSpeedAttribute()`函数是由我们在`AttributeSet.h`中添加的宏块创建的([Defining Attribute](#concepts-as-attributes)).  
+`GetMoveSpeedAttribute()`函数是由我们在`AttributeSet.h`中添加的宏块创建的([定义Attribute](#concepts-as-attributes)).  
 
-`PreAttributeChange()`可以由`Attribute`的任何改变触发, 无论是使用`Attribute`的setter(由`AttributeSet.h`中的宏块定义([Defining Attribute](#concepts-as-attributes)))还是使用[GameplayEffect](#concepts-ge).  
+`PreAttributeChange()`可以被`Attribute`的任何修改触发, 无论是使用`Attribute`的setter(由`AttributeSet.h`中的宏块定义([定义Attribute](#concepts-as-attributes)))还是使用[GameplayEffect](#concepts-ge).  
 
-**Note**: 在这里做的任何限制都不会永久性地修改`ASC`中的`Modifier(Modifier)`, 只会修改查询`Modifier`返回的值, 这意味着像[GameplayEffectExecutionCalculations](#concepts-ge-ec)和[ModifierMagnitudeCalculations](#concepts-ge-mmc)这种从所有`Modifier`处重新计算CurrentValue的函数需要再次执行限制(Clamp)操作.  
+**Note**: 在这里做的任何限制都不会永久性地修改`ASC`中的`Modifier`, 只会修改查询`Modifier`的返回值, 这意味着像[GameplayEffectExecutionCalculations](#concepts-ge-ec)和[ModifierMagnitudeCalculations](#concepts-ge-mmc)这种自所有`Modifier`重新计算CurrentValue的函数需要再次执行限制(Clamp)操作.  
 
-**Note**: Epic对于PreAttributeChange()的注释说明不要将该函数用于游戏逻辑事件, 而主要在其中做限制操作. 对于修改`Attribute`的游戏逻辑事件的建议位置是`UAbilitySystemComponent::GetGameplayAttributeValueChangeDelegate(FGameplayAttribute Attribute)`([Responding to Attribute Changes](#concepts-a-changes)).  
+**Note**: Epic对于PreAttributeChange()的注释说明不要将该函数用于游戏逻辑事件, 而主要在其中做限制操作. 对于修改`Attribute`的游戏逻辑事件的建议位置是`UAbilitySystemComponent::GetGameplayAttributeValueChangeDelegate(FGameplayAttribute Attribute)`([响应Attribute变化](#concepts-a-changes)).  
 
 **[⬆ 返回目录](#table-of-contents)**
 
 <a name="concepts-as-postgameplayeffectexecute"></a>
 #### 4.4.6 PostGameplayEffectExecute()
 
-`PostGameplayEffectExecute(const FGameplayEffectModCallbackData & Data)`会在某个来自`即刻(Instant)GameplayEffect`的`Attribute`的BaseValue变化之后触发, 当修改是来自[GameplayEffect](#concepts-ge)时, 这就是一个处理更多`Attribute`操作的有效位置.  
+`PostGameplayEffectExecute(const FGameplayEffectModCallbackData & Data)`仅在`即刻(Instant)GameplayEffect`对`Attribute`的BaseValue修改之后触发, 当[GameplayEffect](#concepts-ge)对其修改时, 这就是一个处理更多`Attribute`操作的有效位置.  
 
-例如, 在样例项目中, 我们在这里从生命值`Attribute`中减去了最终的伤害值`Meta Attribute`, 如果有护盾值`Attribute`的话, 我们也会在减除生命值之前从护盾值中减除伤害值. 样例项目也在这里应用被击打反应动画, 显示浮动的伤害数值, 和为击杀者分配经验值和赏金. 通过设计, 伤害值`Meta Attribute`总是会通过某个`即刻(Instant)GameplayEffect`而不会通过Attribute setter.  
+例如, 在样例项目中, 我们在这里从生命值`Attribute`中减去了最终的伤害值`Meta Attribute`, 如果有护盾值`Attribute`的话, 我们也会在减除生命值之前从护盾值中减除伤害值. 样例项目也在这里应用了被击打反应动画, 显示浮动的伤害数值和为击杀者分配经验值和赏金. 通过设计, 伤害值`Meta Attribute`总是会传递给`即刻(Instant)GameplayEffect`而不是Attribute Setter.  
 
-其他只会由`即刻(Instant)GameplayEffect`修改BaseValue的`Attribute`, 像魔法值和耐力值, 也可以在这里被限制为它们对应`Attribute`的最大值.  
+其他只会由`即刻(Instant)GameplayEffect`修改BaseValue的`Attribute`, 像魔法值和耐力值, 也可以在这里被限制到其相应`Attribute`的最大值.  
 
-**Note**: 当PostGameplayEffectExecute()被调用时, 对`Attribute`的改变已经发生, 但是还没有被同步回客户端, 因此在这里限制值不会造成对客户端的二次同步, 客户端只会接收到限制后的值.  
+**Note**: 当PostGameplayEffectExecute()被调用时, 对`Attribute`的修改已经发生, 但是还没有被同步回客户端, 因此在这里限制值不会造成对客户端的二次同步, 客户端只会接收到限制后的值.  
 
 **[⬆ 返回目录](#table-of-contents)**
 
