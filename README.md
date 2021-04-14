@@ -69,7 +69,7 @@
                 * [4.5.12.1.1 SetByCaller](#concepts-ge-ec-senddata-setbycaller)
                 * [4.5.12.1.2 支持(Backing)数据Attribute计算Modifier](#concepts-ge-ec-senddata-backingdataattribute)
                 * [4.5.12.1.3 支持(Backing)数据临时变量计算Modifier](#concepts-ge-ec-senddata-backingdatatempvariable)
-                * [4.5.12.1.4 GameplayEffect上下文](#concepts-ge-ec-senddata-effectcontext)
+                * [4.5.12.1.4 GameplayEffectContext](#concepts-ge-ec-senddata-effectcontext)
         * [4.5.13 自定义应用需求](#concepts-ge-car)
         * [4.5.14 花费(Cost)GameplayEffect](#concepts-ge-cost)
         * [4.5.15 冷却(Cooldown)GameplayEffect](#concepts-ge-cooldown)
@@ -1373,7 +1373,7 @@ ExecutionParams.AttemptCalculateTransientAggregatorMagnitude(FGameplayTag::Reque
 **[⬆ 返回目录](#table-of-contents)**
 
 <a name="concepts-ge-ec-senddata-effectcontext"></a>
-###### 4.5.12.1.4 GameplayEffect上下文
+###### 4.5.12.1.4 GameplayEffectContext
 
 你可以通过[`GameplayEffectSpec`中的自定义`GameplayEffectContext`](#concepts-ge-context)发送数据到`ExecutionCalculation`.  
 
@@ -1408,20 +1408,20 @@ FGameplayEffectSpec* GetOwningSpecForPreExecuteMod() const;
 `CAR`的应用场景:  
 
 * 目标需要有一定数量的`Attribute`.
-* 目标需要有一定数量的`GameplayEffect`堆栈(Stack).
+* 目标需要有一定数量的`GameplayEffect`堆栈.
 
-`CAR`还有很多高阶功能, 像检查该`GameplayEffect`的实例是否已经位于目标上和修改当前实例的[持续时间](#concepts-ge-duration)而不是应用一个新的实例(对`CanApplyGameplayEffect()`返回false).
+`CAR`还有很多高阶功能, 像检查`GameplayEffect`实例是否已经位于目标上, 修改当前实例的[持续时间](#concepts-ge-duration)而不是应用一个新实例(对于`CanApplyGameplayEffect()`返回false).
 
 **[⬆ 返回目录](#table-of-contents)**
 
 <a name="concepts-ge-cost"></a>
 #### 4.5.14 花费(Cost)GameplayEffect
 
-[GameplayAbility](#concepts-ga)有一个特别设计用来作为Ability花费(Cost)的可选`GameplayEffect`. 花费(Cost)是指`ASC`激活`GameplayAbility`所需必要的`Attribute`量. 如果某个`GA`不能提供`花费GE`, 那么它们就不能被激活. 该`花费GE`应该是某个带有一个或多个自`Attribute`减Modifier的`即刻(Instant)GameplayEffect`. 默认情况下, `花费GE`是可以被预测的, 并且建议保留该功能, 也就是不要使用`ExecutionCalculations`, `MMC`对于复杂的花费计算是完美适配并且鼓励使用的.  
+[GameplayAbility](#concepts-ga)有一个特别设计用来作为Ability花费(Cost)的可选`GameplayEffect`. 花费(Cost)是指`ASC`激活`GameplayAbility`所必需的`Attribute`量. 如果某个`GA`不能提供`Cost GE`, 那么它就不能被激活. 该`Cost GE`应该是某个带有一个或多个自`Attribute`中减值Modifier的`即刻(Instant)GameplayEffect`. 默认情况下, `Cost GE`是可以被预测的, 建议保留该功能, 也就是不要使用`ExecutionCalculations`, `MMC`对于复杂的花费计算是完美适配并且鼓励使用的.  
 
-开始的时候, 你通常会为每个有花费的`GA`都设置一个独一无二的`花费GE`, 一个更高阶的技巧是对多个`GA`复用一个`花费GE`, 只需修改自`GA`的`花费GE`创建的`GameplayEffectSpec`中指定的数据(定义在`GA`的花费值), **这只作用于`实例化(Instanced)`的Ability.**  
+开始的时候, 你通常会为每个有花费的`GA`都设置一个独一无二的`Cost GE`, 一个更高阶的技巧是对多个`GA`复用一个`Cost GE`, 只需修改自`GA`的`Cost GE`创建的`GameplayEffectSpec`中指定的数据(花费值是在`GA`上定义的), **这只作用于`实例化(Instanced)`的Ability.**  
 
-复用`花费GE`的两种技巧:  
+复用`Cost GE`的两种技巧:  
 
 1. 使用`MMC`. 这是最简单的方式. 创建一个从`GameplayAbility`实例读取花费值的[MMC](#concepts-ge-mmc), 你可以从`GameplayEffectSpec`中获取到该实例.  
 
@@ -1455,11 +1455,11 @@ FScalableFloat Cost;
 <a name="concepts-ge-cooldown"></a>
 #### 4.5.15 冷却(Cooldown)GameplayEffect
 
-[GameplayAbility](#concepts-ga)有一个特别设计用来作为Ability冷却(Cooldown)的可选`GameplayEffect`. 冷却时间决定了激活Ability之后多久可以再次激活. 如果某个`GA`在冷却中, 那么它就不能被激活. 该`冷却GE`应该是一个不带有`Modifier`的`持续(Duration)GameplayEffect`, 并且在`GameplayEffect`的`GrantedTags`中每个`GameplayAbility`或Ability插槽(Slot)(如果你的游戏有分配到插槽的可交换Ability且共享一个冷却)都有一个独一无二的`GameplayTag`(`Cooldown Tag`). `GA`实际上会检查`Cooldown Tag`的存在而不是`Cooldown GE`的存在, 默认情况下, `冷却GE`是可以被预测的, 并且建议保留该功能, 也就是不要使用`ExecutionCalculations`, `MMC`对于复杂的花费计算是完美适配并且鼓励使用的.  
+[GameplayAbility](#concepts-ga)有一个特别设计用来作为Ability冷却(Cooldown)的可选`GameplayEffect`. 冷却时间决定了激活Ability之后多久可以再次激活. 如果某个`GA`在冷却中, 那么它就不能被激活. 该`Cooldown GE`应该是一个不带有`Modifier`的`持续(Duration)GameplayEffect`, 并且在`GameplayEffect`的`GrantedTags`中每个`GameplayAbility`或Ability插槽(Slot)(如果你的游戏有分配到插槽的可交换Ability且共享同一个冷却)都有一个独一无二的`GameplayTag`(`Cooldown Tag`). `GA`实际上会检查`Cooldown Tag`的存在而不是`Cooldown GE`的存在, 默认情况下, `Cooldown GE`是可以被预测的, 建议保留该功能, 也就是不要使用`ExecutionCalculations`, `MMC`对于复杂的冷却计算是完美适配并且鼓励使用的.  
 
-开始的时候, 你通常会为每个有冷却的`GA`都设置一个独一无二的`冷却GE`, 一个更高阶的技巧是对多个`GA`复用一个`冷却GE`, 只需修改自`GA`的`冷却GE`创建的`GameplayEffectSpec`中指定的数据(冷却时间和定义在`GA`的`Cooldown Tag`), **这只作用于`实例化(Instanced)`的Ability.**  
+开始的时候, 你通常会为每个有冷却的`GA`都设置一个独一无二的`Cooldown GE`, 一个更高阶的技巧是对多个`GA`复用一个`Cooldown GE`, 只需修改自`GA`的`Cooldown GE`创建的`GameplayEffectSpec`中指定的数据(冷却时间和`Cooldown Tag`是在`GA`上定义的), **这只作用于`实例化(Instanced)`的Ability.**  
 
-复用`冷却GE`的两种技巧:  
+复用`Cooldown GE`的两种技巧:  
 
 1. 使用[SetByCaller](#concepts-ge-spec-setbycaller). 这是最简单的方式. 使用一个`GameplayTag`设置共享`冷却GE`的持续时间到`SetByCaller`. 在`GameplayAbility`子类中, 为持续时间定义一个浮点/`FScalableFloat`, 为独一无二的`Cooldown Tag`定义一个`FGameplayTagContainer`和一个临时`FGameplayTagContainer`, 其用来作为`Cooldown Tag`与`冷却GE`的标签的并集的返回指针.  
 
