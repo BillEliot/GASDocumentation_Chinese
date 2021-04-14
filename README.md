@@ -1461,7 +1461,7 @@ FScalableFloat Cost;
 
 复用`Cooldown GE`的两种技巧:  
 
-1. 使用[SetByCaller](#concepts-ge-spec-setbycaller). 这是最简单的方式. 使用一个`GameplayTag`设置共享`冷却GE`的持续时间到`SetByCaller`. 在`GameplayAbility`子类中, 为持续时间定义一个浮点/`FScalableFloat`, 为独一无二的`Cooldown Tag`定义一个`FGameplayTagContainer`和一个临时`FGameplayTagContainer`, 其用来作为`Cooldown Tag`与`冷却GE`的标签的并集的返回指针.  
+1. 使用[SetByCaller](#concepts-ge-spec-setbycaller). 这是最简单的方式. 使用`GameplayTag`设置`SetByCaller`为共享`Cooldown GE`的持续时间. 在`GameplayAbility`子类中, 为持续时间定义一个浮点/`FScalableFloat`变量, 为独一无二的`Cooldown Tag`定义一个`FGameplayTagContainer`, 除此之外还要定义一个临时`FGameplayTagContainer`, 其用来作为`Cooldown Tag`与`Cooldown GE`标签并集的返回指针.  
 
 ```c++
 UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cooldown")
@@ -1476,7 +1476,7 @@ UPROPERTY()
 FGameplayTagContainer TempCooldownTags;
 ```
 
-之后重写`UGameplayAbility::GetCooldownTags()`以返回`Cooldown Tag`和所有现存`冷却GE`的标签的并集.  
+之后重写`UGameplayAbility::GetCooldownTags()`以返回`Cooldown Tag`和所有现有`Cooldown GE`标签的并集.  
 
 ```c++
 const FGameplayTagContainer * UPGGameplayAbility::GetCooldownTags() const
@@ -1492,7 +1492,7 @@ const FGameplayTagContainer * UPGGameplayAbility::GetCooldownTags() const
 }
 ```
 
-最后, 重写`UGameplayAbility::ApplyCooldown()`以注入我们自己的`Cooldown Tag`和将`SetByCaller`添加到冷却`GameplayEffectSpec`.  
+最后, 重写`UGameplayAbility::ApplyCooldown()`以注入我们自己的`Cooldown Tag`, 并将`SetByCaller`添加到`Cooldown GameplayEffectSpec`.  
 
 ```c++
 void UPGGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo * ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
@@ -1508,11 +1508,11 @@ void UPGGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, 
 }
 ```
 
-在这个图片中, 冷却的持续时间`Modifier`被设置为带有一个`Data.Cooldown`的`Data Tag`的`SetByCaller`. `Data.Cooldown`就是上面代码中的`OurSetByCallerTag`.  
+下面图片中, 冷却时间`Modifier`被设置为`SetByCaller`, 其`Data Tag`为`Data.Cooldown`. `Data.Cooldown`就是上面代码中的`OurSetByCallerTag`.  
 
 ![Cooldown GE with SetByCaller](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/cooldownsbc.png)  
 
-2. 使用[MMC](#concepts-ge-mmc). 它的设置与上文所提的一致, 除了不需要在`Cooldown GE`和`ApplyCost`中设置`SetByCaller`作为持续时间, 相反, 我们需要将持续时间设置为一个指向新`MMC`的`Custom Calculation类`.  
+2. 使用[MMC](#concepts-ge-mmc). 它的设置与上文所提的一致, 除了不需要在`Cooldown GE`和`ApplyCost`中设置`SetByCaller`作为持续时间, 相反, 我们需要将持续时间设置为`Custom Calculation类`并将其指向新创建的`MMC`.  
 
 ```c++
 UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cooldown")
@@ -1527,7 +1527,7 @@ UPROPERTY()
 FGameplayTagContainer TempCooldownTags;
 ```
 
-之后重写`UGameplayAbility::GetCooldownTags()`以返回`Cooldown标签`的集合和任何现存`Cooldown GE`的标签.  
+之后重写`UGameplayAbility::GetCooldownTags()`以返回`Cooldown Tag`和所有现有`Cooldown GE`标签的并集.  
 
 ```c++
 const FGameplayTagContainer * UPGGameplayAbility::GetCooldownTags() const
@@ -1543,7 +1543,7 @@ const FGameplayTagContainer * UPGGameplayAbility::GetCooldownTags() const
 }
 ```
 
-最后, 重写`UGameplayAbility::ApplyCooldown()`将我们的`Cooldown标签`注入`Cooldown GameplayEffectSpec`.  
+最后, 重写`UGameplayAbility::ApplyCooldown()`以将我们的`Cooldown Tag`注入`Cooldown GameplayEffectSpec`.  
 
 ```c++
 void UPGGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo * ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
@@ -1617,16 +1617,16 @@ bool APGPlayerState::GetCooldownRemainingForTag(FGameplayTagContainer CooldownTa
 
 **[⬆ 返回目录](#table-of-contents)**
 
-<a name="concepts-ge-cooldown-listen"></a>
+ <a name="concepts-ge-cooldown-listen"></a>
 ##### 4.5.15.2 监听冷却开始和结束
 
 为了监听某个冷却何时开始, 你可以通过绑定`AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf`或者`AbilitySystemComponent->RegisterGameplayTagEvent(CooldownTag, EGameplayTagEventType::NewOrRemoved)`分别在`Cooldown GE`应用和`Cooldown Tag`添加时作出响应. 我建议监听`Cooldown GE`何时应用, 因为这时还可以访问应用它的`GameplayEffectSpec`. 由此你可以确定当前`Cooldown GE`是客户端预测的还是由服务端校正的.  
 
-为了监听某个冷却何时结束, 你可以通过绑定`AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate()`或者`AbilitySystemComponent->RegisterGameplayTagEvent(CooldownTag, EGameplayTagEventType::NewOrRemoved)`分别在`Cooldown GE`移除和`Cooldown Tag`移除时作出响应. 我建议监听`Cooldown Tag`何时移除, 因为当服务端校正的`Cooldown GE`到来时, 会移除客户端预测的`Cooldown GE`, 这会响应`OnAnyGameplayEffectRemovedDelegate()`, 即使仍处于冷却过程中. 预测的`Cooldown GE`移除期间和服务端校正的`Cooldown GE`应用期间`Cooldown Tag`都不会改变.  
+为了监听某个冷却何时结束, 你可以通过绑定`AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate()`或者`AbilitySystemComponent->RegisterGameplayTagEvent(CooldownTag, EGameplayTagEventType::NewOrRemoved)`分别在`Cooldown GE`移除和`Cooldown Tag`移除时作出响应. 我建议监听`Cooldown Tag`何时移除, 因为当服务端校正的`Cooldown GE`到来时, 会移除客户端预测的`Cooldown GE`, 这会响应`OnAnyGameplayEffectRemovedDelegate()`, 即使仍处于冷却过程中. 预测的`Cooldown GE`在移除时和服务端校正的`Cooldown GE`在应用时`Cooldown Tag`都不会改变.  
 
 **Note:** 在客户端上监听某个`GameplayEffect`添加或移除要求其可以接收同步的`GameplayEffect`, 这依赖于它们`ASC`的[同步模式](#concepts-asc-rm).  
 
-样例项目包含一个用于监听冷却开始和结束的自定义蓝图节点, HUD UMG Widget使用它来更新陨石技能的冷却时间剩余量, 该`AsyncTask`会一直响应直到手动调用`EndTask()`, 就像在UMG Widget的`Destruct`事件中调用那样. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
+样例项目包含一个用于监听冷却开始和结束的自定义蓝图节点, HUD UMG Widget使用它来更新陨石技能的剩余冷却时间, 该`AsyncTask`会一直响应直到手动调用`EndTask()`, 就像在UMG Widget的`Destruct`事件中调用那样. 参阅`AsyncTaskAttributeChanged.h/cpp`.  
 
 ![Listen for Cooldown Change BP Node](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/cooldownchange.png)  
 
@@ -1635,11 +1635,11 @@ bool APGPlayerState::GetCooldownRemainingForTag(FGameplayTagContainer CooldownTa
 <a name="concepts-ge-cooldown-prediction"></a>
 ##### 4.5.15.3 预测冷却时间
 
-冷却时间目前不是真正可预测的. 我们可以在客户端预测的`Cooldown GE`应用时启动UI的冷却时间计时器, 但是`GameplayAbility`的实际冷却时间是由服务端的冷却时间剩余决定的. 基于玩家的延迟情况, 客户端预测的冷却可能已经结束, 但是服务端上的`GameplayAbility`仍处于冷却过程, 这会阻止`GameplayAbility`的即刻再激活直到服务端冷却结束.  
+目前冷却时间不是真正可预测的. 我们可以在客户端预测的`Cooldown GE`应用时启动UI的冷却时间计时器, 但是`GameplayAbility`的实际冷却时间是由服务端的冷却时间剩余决定的. 取决于玩家的延迟情况, 可能客户端预测的冷却已经结束, 但是服务端上的`GameplayAbility`仍处于冷却过程, 这会阻止`GameplayAbility`的立刻再激活直到服务端冷却结束.  
 
 样例项目通过在客户端预测的冷却开始时灰化陨石技能的图标, 之后在服务端校正的`Cooldown GE`到来时启动冷却计时器处理该问题.  
 
-在实际游戏中导致的结果就是高延迟的玩家相比低延迟的玩家对冷却时间短的技能有更低的触发率, 从而处于劣势, Fortnite通过使其武器拥有无需使用冷却`GameplayEffect`的自定义Bookkeeping而避免该现象.  
+在实际游戏中导致的结果就是高延迟的玩家相比低延迟的玩家对冷却时间短的技能有更低的触发率, 从而处于劣势, Fortnite通过使其武器使用无需冷却`GameplayEffect`的自定义Bookkeeping而避免该现象.  
 
 Epic希望在未来的[GAS迭代版本](#concepts-p-future)中实现真正的冷却预测(玩家可以激活一个在客户端冷却完成但服务端仍处于冷却过程的`GameplayAbility`).  
 
@@ -1648,7 +1648,7 @@ Epic希望在未来的[GAS迭代版本](#concepts-p-future)中实现真正的冷
 <a name="concepts-ge-duration"></a>
 #### 4.5.16 修改已激活GameplayEffect的持续时间
 
-为了修改`Cooldown GE`或其他任何`持续(Duration)`GameplayEffect的剩余时间, 我们需要修改`GameplayEffectSpec`的持续时间, 更新它的`StartServerWorldTime`, `CachedStartServerWorldTime`, `StartWorldTime`并且使用`CheckDuration()`返回对持续时间的检查. 在服务端上完成这些操作并且将`FActiveGameplayEffect`标记为dirty会将这些修改同步到客户端. **Note:** 该操作包含一个`const_cast`, 这可能不是`Epic`希望的修改持续时间的方法, 但是迄今为止它看起来运行得很好.  
+为了修改`Cooldown GE`或其他任何`持续(Duration)`GameplayEffect的剩余时间, 我们需要修改`GameplayEffectSpec`的持续时间, 更新它的`StartServerWorldTime`, `CachedStartServerWorldTime`, `StartWorldTime`, 并且使用`CheckDuration()`重新检查持续时间. 在服务端上完成这些操作并将`FActiveGameplayEffect`标记为dirty, 其会将这些修改同步到客户端. **Note:** 该操作包含一个`const_cast`, 这可能不是`Epic`希望的修改持续时间的方法, 但是迄今为止它看起来运行得很好.  
 
 ```c++
 bool UPAAbilitySystemComponent::SetGameplayEffectDurationHandle(FActiveGameplayEffectHandle Handle, float NewDuration)
@@ -1690,7 +1690,7 @@ bool UPAAbilitySystemComponent::SetGameplayEffectDurationHandle(FActiveGameplayE
 **[⬆ 返回目录](#table-of-contents)**
 
 <a name="concepts-ge-dynamic"></a>
-#### 4.5.17 在运行时创建动态`GameplayEffect`
+#### 4.5.17 运行时创建动态`GameplayEffect`
 
 在运行时创建动态`GameplayEffect`是一个高阶技术, 你不必经常使用它.  
 
@@ -1698,7 +1698,7 @@ bool UPAAbilitySystemComponent::SetGameplayEffectDurationHandle(FActiveGameplayE
 
 运行时创建的`即刻(Instant)GameplayEffect`也可以在客户端[预测](#concepts-p)的`GameplayAbility`中调用. 然而, 目前还不明确动态创建是否有副作用.  
 
-样例项目会在`AttributeSet`受到致命打击时创建该`GameplayEffect`来将金币和经验点数返还给角色击杀者.  
+样例项目会在角色`AttributeSet`中的值受到致命一击时创建该`GameplayEffect`来将金币和经验点数返还给击杀者.  
 
 ```c++
 // Create a dynamic instant Gameplay Effect to give the bounties
@@ -1769,13 +1769,13 @@ void UGameplayAbilityRuntimeGE::ActivateAbility(const FGameplayAbilitySpecHandle
 <a name="concepts-ge-containers"></a>
 #### 4.5.18 GameplayEffect Containers
 
-Epic的[Action RPG](https://www.unrealengine.com/marketplace/en-US/slug/action-rpg)样例项目实现了一个名为`FGameplayEffectContainer`的结构体, 它不存于原生GAS, 但是对于包含`GameplayEffect`和[TargetData](#concepts-targeting-data)极其好用, 它会使一些过程自动化, 比如从`GameplayEffect`中创建`GameplayEffectSpec`并在其`GameplayEffectContext`中设置默认值. 在`GameplayAbility`中创建`GameplayEffectContainer`并将其传递给已生成的投掷物是非常简单和显而易见的, 然而我选择在样例项目中不实现`GameplayEffectContainer`, 因为我想向你展示的是没有它的原生GAS, 但是我高度建议你研究一下它并将其纳入到你的项目中.  
+Epic的[Action RPG](https://www.unrealengine.com/marketplace/en-US/slug/action-rpg)样例项目实现了一个名为`FGameplayEffectContainer`的结构体, 它不属于原生GAS, 但是对于包含`GameplayEffect`和[TargetData](#concepts-targeting-data)极其好用, 它会使一些过程自动化, 比如从`GameplayEffect`中创建`GameplayEffectSpec`并在其`GameplayEffectContext`中设置默认值. 在`GameplayAbility`中创建`GameplayEffectContainer`并将其传递给已生成的投掷物是非常简单和显而易见的, 然而我没有选择在样例项目中实现`GameplayEffectContainer`, 因为我想向你展示的是没有它的原生GAS, 但是我高度建议你研究一下它并将其纳入到你的项目中.  
 
-为了访问`GameplayEffectContainer`中的`GESpec`做一些诸如添加`SetByCaller`的操作, 请使用`FGameplayEffectContainer`结构体中的`GESpec`数组索引访问`GESpec`引用, 这要求你需要提前知道想要访问的`GESpec`的索引.  
+为了访问`GameplayEffectContainer`中的`GESpec`以求做一些诸如添加`SetByCaller`的操作, 请使用`FGameplayEffectContainer`结构体中的`GESpec`数组索引访问`GESpec`引用, 这要求你需要提前知道想要访问的`GESpec`的索引.  
 
 ![SetByCaller with a GameplayEffectContainer](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/gecontainersetbycaller.png)  
 
-`GameplayEffectContainer`还包含一个可选的用于[定位](#concepts-targeting-containers)的高效方法.
+`GameplayEffectContainer`还包含一个可选的用于[定位(Target)](#concepts-targeting-containers)的高效方法.
 
 **[⬆ 返回目录](#table-of-contents)**
 
