@@ -62,7 +62,7 @@
         * [4.5.8 免疫](#concepts-ge-immunity)
         * [4.5.9 GameplayEffectSpec](#concepts-ge-spec)
             + [4.5.9.1 SetByCaller](#concepts-ge-spec-setbycaller)
-        * [4.5.10 GameplayEffect上下文](#concepts-ge-context)
+        * [4.5.10 GameplayEffectContext](#concepts-ge-context)
         * [4.5.11 Modifier Magnitude Calculation](#concepts-ge-mmc)
         * [4.5.12 Gameplay Effect Execution Calculation](#concepts-ge-ec)
             + [4.5.12.1 发送数据到Execution Calculation](#concepts-ge-ec-senddata)
@@ -1104,26 +1104,26 @@ float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, 
 <a name="concepts-ge-tags"></a>
 #### 4.5.7 GameplayEffect标签
 
-`GameplayEffect`可以带有多个[GameplayTagContainer](#concepts-gt), 设计师可以编辑每个种类(Category)的`Added`和`Removed`GameplayTagContainer, 结果会在编译时显示在合并的`GameplayTagContainer`中. `Added`标签是该`GameplayEffect`新增的其父类之前没有的标签, `Removed`标签是其父类拥有但该类没有的标签.  
+`GameplayEffect`可以带有多个[GameplayTagContainer](#concepts-gt), 设计师可以编辑每个类别的`Added`和`Removed`GameplayTagContainer, 结果会在编译后显示在`Combined GameplayTagContainer`中. `Added`标签是该`GameplayEffect`新增的之前其父类没有的标签, `Removed`标签是其父类拥有但该类没有的标签.  
 
 |分类|描述|
 |:-:|:-:|
 |Gameplay Effect Asset Tags|`GameplayEffect`拥有的标签, 它们自身没有任何功能且只用于描述`GameplayEffect`.|
-|Granted Tags|存于`GameplayEffect`中但又用于`GameplayEffect`应用到的`ASC`的标签. 当`GameplayEffect`移除时它们也会从`ASC`中移除. 该标签只作用于`持续(Duration)`和`无限(Infinite)GameplayEffect`.|
-|Ongoing Tag Requirements|一旦应用后, 这些标签将决定`GameplayEffect`是开启还是关闭. 一个`GameplayEffect`可以是关闭但仍然是应用的. 如果某个`GameplayEffect`由于不符合`Ongoing Tag Requirements`而关闭, 但是之后又满足需求了, 那么该`GameplayEffect`会重新打开并重应用它的`Modifier`. 该标签只作用于`持续(Duration)`和`无限(Infinite)GameplayEffect`.|
+|Granted Tags|存于`GameplayEffect`中且又用于`GameplayEffect`所应用`ASC`的标签. 当`GameplayEffect`移除时它们也会从`ASC`中移除. 该标签只作用于`持续(Duration)`和`无限(Infinite)GameplayEffect`.|
+|Ongoing Tag Requirements|一旦`GameplayEffect`应用后, 这些标签将决定`GameplayEffect`是开启还是关闭. `GameplayEffect`可以是关闭但仍然是应用的. 如果某个`GameplayEffect`由于不符合`Ongoing Tag Requirements`而关闭, 但是之后又满足需求了, 那么该`GameplayEffect`会重新打开并重新应用它的`Modifier`. 该标签只作用于`持续(Duration)`和`无限(Infinite)GameplayEffect`.|
 |Application Tag Requirements|位于目标上决定某个`GameplayEffect`是否可以应用到该目标的标签, 如果不满足这些需求, 那么`GameplayEffect`就不可应用.|
-|Remove Gameplay Effects with Tags|当该`GameplayEffect`被成功应用后, 位于目标上的`GameplayEffect`会从目标中删除它在`Asset Tag`或`Granted Tag`中的这些标签.|
+|Remove Gameplay Effects with Tags|当`GameplayEffect`成功应用后, 如果位于目标上的该`GameplayEffect`在其`Asset Tags`或`Granted Tags`中有任意一个本标签的话, 其就会自目标上移除.|
 
 **[⬆ 返回目录](#table-of-contents)**
 
 <a name="concepts-ge-immunity"></a>
 #### 4.5.8 免疫
 
-`GameplayEffect`可以基于[GameplayTag](#concepts-gt)实现免疫, 有效阻止其他`GameplayEffect`的应用. 尽管免疫可以由`Application Tag Requirements`等方式有效地实现, 但是使用该系统可以在`GameplayEffect`被免疫阻塞时提供`UAbilitySystemComponent::OnImmunityBlockGameplayEffectDelegate`委托(Delegate).  
+`GameplayEffect`可以基于[GameplayTag](#concepts-gt)实现免疫, 有效阻止其他`GameplayEffect`应用. 尽管免疫可以由`Application Tag Requirements`等方式有效地实现, 但是使用该系统可以在`GameplayEffect`被免疫阻止时提供`UAbilitySystemComponent::OnImmunityBlockGameplayEffectDelegate`委托(Delegate).  
 
-`GrantedApplicationImmunityTags`会检查源`ASC`(包括源Ability的AbilityTag, 如果有的话)是否包含特定的标签, 这是一种基于特定Character或源的标签对其所有`GameplayEffect`提供免疫的方法.  
+`GrantedApplicationImmunityTags`会检查源(Source)`ASC`(包括源Ability的AbilityTag, 如果有的话)是否包含特定的标签, 这是一种基于确定Character或源(Source)的标签对其所有`GameplayEffect`提供免疫的方法.  
 
-`Granted Application Immunity Query`会检查传入的`GameplayEffectSpec`是否与其查询条件相匹配, 从而阻塞或允许其应用.  
+`Granted Application Immunity Query`会检查传入的`GameplayEffectSpec`是否与其查询条件相匹配, 从而阻止或允许其应用.  
 
 `GameplayEffect`蓝图中的查询条件都有友好的悬浮提示帮助.  
 
@@ -1132,7 +1132,7 @@ float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, 
 <a name="concepts-ge-spec"></a>
 #### 4.5.9 GameplayEffectSpec
 
-[GameplayEffectSpec(GESpec)](https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/FGameplayEffectSpec/index.html)可以看作是`GameplayEffect`的实例, 它保存了一个其所代表的`GameplayEffect`类的引用, 创建时的等级和创建者, 它在应用之前可以在运行时(Runtime)自由的创建和修改, 不像`GameplayEffect`应该由设计师在运行前创建. 当应用`GameplayEffect`时, `GameplayEffectSpec`会自`GameplayEffect`创建并且会实际应用到目标.  
+[GameplayEffectSpec(GESpec)](https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/FGameplayEffectSpec/index.html)可以看作是`GameplayEffect`的实例, 它保存了一个其所代表的`GameplayEffect`类引用, 创建时的等级和创建者, 它在应用之前可以在运行时(Runtime)自由的创建和修改, 不像`GameplayEffect`应该由设计师在运行前创建. 当应用`GameplayEffect`时, `GameplayEffectSpec`会自`GameplayEffect`创建并且会实际应用到目标(Target).  
 
 `GameplayEffectSpec`是由`UAbilitySystemComponent::MakeOutgoingSpec()(BlueprintCallable)`自`GameplayEffect`创建的. `GameplayEffectSpec`不必立即应用. 通常是将`GameplayEffectSpec`传递给创建自Ability的投掷物, 该投掷物可以应用到它之后击中的目标. 当`GameplayEffectSpec`成功应用后, 就会返回一个名为`FActiveGameplayEffect`的新结构体.  
 
@@ -1141,25 +1141,25 @@ float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, 
 * 创建该`GameplayEffectSpec`的`GameplayEffect`类.
 * 该`GameplayEffectSpec`的等级. 通常和创建`GameplayEffectSpec`的Ability的等级一样, 但是可以是不同的.
 * `GameplayEffectSpec`的持续时间. 默认是`GameplayEffect`的持续时间, 但是可以是不同的.
-* 对于周期性的Effect中`GameplayEffectSpec`的周期. 默认是`GameplayEffect`的周期, 但是可以是不同的.
+* 对于周期性Effect中`GameplayEffectSpec`的周期, 默认是`GameplayEffect`的周期, 但是可以是不同的.
 * 该`GameplayEffectSpec`的当前堆栈数. 堆栈限制取决于`GameplayEffect`.
 * [GameplayEffectContextHandle](#concepts-ge-context)表明该`GameplayEffectSpec`由谁创建.
 * `Attribute`在`GameplayEffectSpec`创建时由于Snapshot被捕获.
-* `GameplayEffectSpec`授予给目标的`DynamicGrantedTag`添加到`GameplayEffect`授予的`GameplayTag`中.
-* `GameplayEffectSpec`的`DynamicAssetTag`添加到`GameplayEffect`的`AssetTag`中.
-* SetByCaller TMaps.
+* 除了`GameplayEffect`授予的`GameplayTags`, `GameplayEffectSpec`还会授予目标(Target)`DynamicGrantedTags`.
+* 除了`GameplayEffect`拥有的`AssetTags`, `GameplayEffectSpec`还会拥有`DynamicAssetTags`.
+* `SetByCaller TMaps`.
 
 **[⬆ 返回目录](#table-of-contents)**
 
 <a name="concepts-ge-spec-setbycaller"></a>
 ##### 4.5.9.1 SetByCaller
 
-`SetByCaller`允许`GameplayEffectSpec`拥有和`GameplayTag`或`FName`相关联的浮点值, 它们存储在`GameplayEffectSpec`上其各自的`TMaps: TMap<FGameplayTag, float>`和`TMap<FName, float>`中, 可以作为`GameplayEffect`中的`Modifier`或者传递浮点值的一般方法使用. 其普遍用法是经由`SetByCaller`传递某个Ability内部生成的数值数据到[GameplayEffectExecutionCalculations](#concepts-ge-ec)或[ModifierMagnitudeCalculations](#concepts-ge-mmc).  
+`SetByCaller`允许`GameplayEffectSpec`拥有和`GameplayTag`或`FName`相关联的浮点值, 它们存储在`GameplayEffectSpec`上其各自的`TMaps: TMap<FGameplayTag, float>`和`TMap<FName, float>`中, 可以作为`GameplayEffect`的`Modifier`或者传递浮点值的通用方法使用. 其普遍用法是经由`SetByCaller`传递某个Ability内部生成的数值数据到[GameplayEffectExecutionCalculations](#concepts-ge-ec)或[ModifierMagnitudeCalculations](#concepts-ge-mmc).  
 
 |SetByCaller使用|说明|
 |:-:|:-:|
-|`Modifier`|必须提前在`GameplayEffect`类中定义. 只能使用`GameplayTag`形式. 如果在`GameplayEffect`类中定义而`GameplayEffectSpec`中没有相应的标签/浮点值对, 那么游戏在`GameplayEffectSpec`应用时会抛出运行时错误并返回0, 对于`Divide`操作这是个潜在问题, 参阅[Modifier](#concepts-ge-mods).|
-|其他位置|无需提前定义. 读取`GameplayEffectSpec`中不存在的`SetByCaller`会返回一个由开发者定义的可带有警告信息的默认值.|
+|`Modifier`|必须提前在`GameplayEffect`类中定义. 只能使用`GameplayTag`形式. 如果在`GameplayEffect`类中定义而`GameplayEffectSpec`中没有相应的标签/浮点值对, 那么游戏在`GameplayEffectSpec`应用时会抛出运行时错误并返回0, 这对于`Divide`操作是个潜在问题, 参阅[Modifier](#concepts-ge-mods).|
+|其他|无需提前定义. 读取`GameplayEffectSpec`中不存在的`SetByCaller`会返回一个由开发者定义的可带有警告信息的默认值.|
 
 为了在蓝图中指定`SetByCaller`值, 请使用相应形式(`GameplayTag`或`FName`)的蓝图节点.  
 
@@ -1192,7 +1192,7 @@ float GetSetByCallerMagnitude(FGameplayTag DataTag, bool WarnIfNotFound = true, 
 **[⬆ 返回目录](#table-of-contents)**
 
 <a name="concepts-ge-context"></a>
-#### 4.5.10 GameplayEffect上下文
+#### 4.5.10 GameplayEffectContext
 
 [GameplayEffectContext](https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/FGameplayEffectContext/index.html)结构体存有关于`GameplayEffectSpec`创建者(Instigator)和[TargetData](#concepts-targeting-data)的信息, 这也是一个很好的可继承结构体以在[ModifierMagnitudeCalculation](#concepts-ge-mmc)/[GameplayEffectExecutionCalculation](#concepts-ge-ec), [AttributeSet](#concepts-as)和[GameplayCue](#concepts-gc)之间传递任意数据.  
 
@@ -1216,16 +1216,16 @@ GASShooter使用了一个子结构体`GameplayEffectContext`来添加可以在`G
 
 `MMC`可以用于各种持续时间的`GameplayEffect` - `即刻(Instant)`, `持续(Duration)`, `无限(Infinite)`和`周期性(Periodic)`.  
 
-`MMC`的强大之处在于可以完全访问`GameplayEffectSpec`来读取`GameplayTag`和`SetByCaller`以捕获位于`GameplayEffect`的`Source`或`Target`中任意数量的`Attribute`值. `Attribute`可以是快照(Snapshot)或者不是, 快照`Attribute`在`GameplayEffectSpec`创建时被捕获而非快照`Attribute`在`GameplayEffectSpec`应用时被捕获并且在`Attribute`被无限(Infinite)或持续(Duration)`GameplayEffect`修改时会自动更新. 捕获`Attribute`会自`ASC`的现有Modifier重新计算它们的`CurrentValue`, 该重新计算**不会**执行`AbilitySet`中的[PreAttributeChange()](#concepts-as-preattributechange), 因此所有的限制操作(Clamp)必须在这里重新处理.  
+`MMC`的优势在于能够完全访问`GameplayEffectSpec`来读取`GameplayTag`和`SetByCaller`，从而能够捕获`GameplayEffect`的`源(Source)`或`目标(Target)`上任意数量的`Attribute`值. `Attribute`可以被Snapshot也可以不被Snapshot, `Snapshotted Attribute`在`GameplayEffectSpec`创建时被捕获而非`Snapshotted Attribute`在`GameplayEffectSpec`应用时被捕获并且该`Attribute`被`无限(Infinite)`或`持续(Duration)`GameplayEffect修改时会自动更新. 捕获`Attribute`会自`ASC`现有的`Modifier`重新计算它们的`CurrentValue`, 该重新计算**不会**执行`AbilitySet`中的[PreAttributeChange()](#concepts-as-preattributechange), 因此所有的限制操作(Clamp)必须在这里重新处理.  
 
-|快照|Source或Target|在GameplayEffectSpec中捕获|Attribute被无限(Infinite)或持续(Duration)GameplayEffect修改时自动更新|
+|Snapshot|源(Source)或目标(Target)|在GameplayEffectSpec中捕获|Attribute被无限(Infinite)或持续(Duration)GameplayEffect修改时自动更新|
 |:-:|:-:|:-:|:-:|
 |是|Source|创建|否|
-|是|Target|应用(译者注: 结合上文说明, 译者猜测此处应该为"创建", 系作者笔误, 如有错误, 请尽快告知我.)|否|
+|是|Target|应用|否|
 |否|Source|应用|是|
 |否|Target|应用|是|
 
-`MMC`的结果浮点值可以进一步由系数和前后系数之和在`GameplayEffect`的Modifier中修改.  
+`MMC`的结果浮点值可以进一步由系数和前后系数之和在`GameplayEffect`的`Modifier`中修改.  
 
 举一个`MMC`的例子, 该`MMC`会捕获目标的魔法值`Attribute`并因为毒药Effect而将其减少, 其减少量的变化取决于目标所拥有的魔法值和可能拥有的某个标签:  
 
@@ -1289,24 +1289,24 @@ float UPAMMC_PoisonMana::CalculateBaseMagnitude_Implementation(const FGameplayEf
 <a name="concepts-ge-ec"></a>
 #### 4.5.12 Gameplay Effect Execution Calculation
 
-[GameplayEffectExecutionCalculation](https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/UGameplayEffectExecutionCalculat-/index.html)(ExecutionCalculation, Execution(你会在插件代码里经常看到这个词)或ExecCalc)是`GameplayEffect`修改`ASC`最强有力的方式. 像[ModifierMagnitudeCalculation](#concepts-ge-mmc)一样, 它也可以捕获`Attribute`并选择性地为其创建快照, 和`MMC`不同的是, 它可以修改多个`Attribute`并且基本上可以处理程序员想要做的任何事. 这种强有力和灵活性的负面就是它是不可[预测](#concepts-p)的和必须在C++中实现.  
+[GameplayEffectExecutionCalculation](https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/UGameplayEffectExecutionCalculat-/index.html)(ExecutionCalculation, Execution(你会在插件代码里经常看到这个词)或ExecCalc)是`GameplayEffect`对`ASC`进行修改最强有力的方式. 像[ModifierMagnitudeCalculation](#concepts-ge-mmc)一样, 它也可以捕获`Attribute`并选择性地为其创建Snapshot, 和`MMC`不同的是, 它可以修改多个`Attribute`并且基本上可以处理程序员想要做的任何事. 这种强有力和灵活性的负面就是它是不可[预测](#concepts-p)的且必须在C++中实现.  
 
 `ExecutionCalculation`只能由`即刻(Instant)`和`周期性(Periodic)`GameplayEffect使用, 插件中所有和"Execute"相关的一般都引用到这两种类型的`GameplayEffect`.  
 
-当`GameplayEffectSpec`创建时, 快照(Snapshotting)会捕获`Attribute`, 而当`GameplayEffectSpec`应用时, 非快照会捕获`Attribute`. 捕获`Attribute`会自`ASC`的现有Modifier重新计算它们的`CurrentValue`, 该重新计算**不会**执行`AbilitySet`中的[PreAttributeChange()](#concepts-as-preattributechange), 因此所有的限制操作(Clamp)必须在这里重新处理.  
+当`GameplayEffectSpec`创建时, Snapshot会捕获`Attribute`, 而当`GameplayEffectSpec`应用时, 非Snapshot会捕获`Attribute`. 捕获`Attribute`会自`ASC`现有的`Modifier`重新计算它们的`CurrentValue`, 该重新计算**不会**执行`AbilitySet`中的[PreAttributeChange()](#concepts-as-preattributechange), 因此所有的限制操作(Clamp)必须在这里重新处理.  
 
 |快照|Source或Target|在GameplayEffectSpec中捕获|
 |:-:|:-:|:-:|
 |是|Source|创建|
-|是|Target|应用(译者注: 结合上文说明, 译者猜测此处应该为"创建", 系作者笔误, 如有错误, 请尽快告知我.)|
+|是|Target|应用|
 |否|Source|应用|
 |否|Target|应用|
 
-为了设置`Attribute`捕获, 我们采用Epic的ActionRPG样例项目使用的方式, 定义一个保存和声明如何捕获`Attribute`的结构体, 并在该结构体的构造函数中创建一个它的副本(Copy). 每个`ExecCalc`都需要有一个这样的结构体. **Note**: 每个结构体需要一个独一无二的名字, 因为它们共享同一个命名空间, 多个结构体使用相同的名字在捕获`Attribute`时会造成错误的行为(大多是捕获到错误的`Attribute`的值).  
+为了设置`Attribute`捕获, 我们采用Epic的ActionRPG样例项目使用的方式, 定义一个保存和声明如何捕获`Attribute`的结构体, 并在该结构体的构造函数中创建一个它的副本(Copy). 每个`ExecCalc`都需要有一个这样的结构体. **Note**: 每个结构体需要一个独一无二的名字, 因为它们共享同一个命名空间, 多个结构体使用相同名字在捕获`Attribute`时会造成错误(大多是捕获到错误的`Attribute`值).  
 
 对于`Local Predicted`, `Server Only`和`Server Initiated`的[GameplayAbility](#concepts-ga), `ExecCalc`只在服务端调用.  
 
-`ExecCalc`最普遍的应用场景是计算来自一个很多`Source`和`Target`中的`Attribute`的复杂公式的伤害值. 样例项目中有一个简单的`ExecCalc`用于计算伤害值, 其从`GameplayEffectSpec`的[SetByCaller](#concepts-ge-spec-setbycaller)中读取伤害值, 之后基于从`Target`捕获的护盾`Attribute`来减少该伤害值. 参阅`GDDamageExecCalculation.cpp/.h`.  
+`ExecCalc`最普遍的应用场景是计算一个来自很多`源(Source)`和`目标(Target)`中`Attribute`伤害值的复杂公式. 样例项目中有一个简单的`ExecCalc`用于计算伤害值, 其从`GameplayEffectSpec`的[SetByCaller](#concepts-ge-spec-setbycaller)中读取伤害值, 之后基于从`目标(Target)`捕获的护盾`Attribute`来减少该伤害值. 参阅`GDDamageExecCalculation.cpp/.h`.  
 
 **[⬆ 返回目录](#table-of-contents)**
 
