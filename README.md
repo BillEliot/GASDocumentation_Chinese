@@ -456,7 +456,7 @@ FGameplayTag::RequestGameplayTag(FName("Your.GameplayTag.Name"))
 <a name="concepts-gt-change"></a>
 #### 4.2.1 响应Gameplay Tags的变化
 
-`ASC`提供了一个委托(Delegate)用于`GameplayTag`添加或移除时触发, 其中`EGameplayTagEventType`参数可以明确是该`GameplayTag`添加/移除还是其`TagMapCount`发生变化时触发.  
+`ASC`提供了一个委托(Delegate)用于在`GameplayTag`添加或移除时触发, 其中`EGameplayTagEventType`参数可以明确是该`GameplayTag`添加/移除还是其`TagMapCount`发生变化时触发.  
 
 ```c++
 AbilitySystemComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(FName("State.Debuff.Stun")), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AGDPlayerState::StunTagChanged);
@@ -1785,7 +1785,7 @@ Epic的[Action RPG](https://www.unrealengine.com/marketplace/en-US/slug/action-r
 <a name="concepts-ga-definition"></a>
 #### 4.6.1 GameplayAbility定义
 
-[GameplayAbility(GA)](https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/Abilities/UGameplayAbility/index.html)是Actor在游戏中可以触发的任何行为和技能. 多个`GameplayAbility`可以在同一时刻激活, 例如奔跑和射击. 其可由蓝图或C++完成.  
+[GameplayAbility(GA)](https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/Abilities/UGameplayAbility/index.html)是Actor在游戏中可以触发的一切行为和技能. 多个`GameplayAbility`可以在同一时刻激活, 例如奔跑和射击. 其可由蓝图或C++完成.  
 
 `GameplayAbility`示例:  
 
@@ -1805,9 +1805,9 @@ Epic的[Action RPG](https://www.unrealengine.com/marketplace/en-US/slug/action-r
 
 这些不是规定, 只是我的建议而已, 你的设计和实现可能是多样的.  
 
-`GameplayAbility`自带的默认功能是根据等级修改Attribute的变化量或者`GameplayAbility`的作用.  
+`GameplayAbility`自带有根据等级修改Attribute变化量或者`GameplayAbility`作用的默认功能.  
 
-`GameplayAbility`运行在所属(Owning)客户端还是服务端取决于[网络执行策略(Net Execution Policy)](#concepts-ga-net)而不是模拟代理(Simulated Proxy). `网络执行策略(Net Execution Policy)`决定某个`GameplayAbility`是否是客户端可[预测](#concepts-p)的, 其对于[可选的花费和冷却`GameplayEffect`](#concepts-ga-commit)包含有默认行为. `GameplayAbility`使用[AbilityTask](#concepts-at)用于随时间推移而发生的行为, 例如等待某个事件, 等待某个Attribute改变, 等待玩家选择一个目标或者使用`Root Motion Source`移动某个`Character`. **模拟客户端(Simulated Client)不会运行`GameplayAbility`.** 相反地, 当服务端执行`Ability`时, 任何需要在模拟代理(Simulated Proxy)上展现的视觉效果(像动画蒙太奇)将会被同步(Replicated)或者通过`AbilityTask`进行RPC或者对于像声音和粒子这样的装饰使用[GameplayCue](#concepts-gc).  
+`GameplayAbility`运行在所属(Owning)客户端还是服务端取决于[网络执行策略(Net Execution Policy)](#concepts-ga-net)而不是Simulated Proxy. `网络执行策略(Net Execution Policy)`决定某个`GameplayAbility`是否是客户端可[预测](#concepts-p)的, 其对于[可选的Cost和`Cooldown GameplayEffect`](#concepts-ga-commit)包含有默认行为. `GameplayAbility`使用[AbilityTask](#concepts-at)用于随时间推移而发生的行为, 例如等待某个事件, 等待某个Attribute改变, 等待玩家选择一个目标或者使用`Root Motion Source`移动某个`Character`. **Simulated Client不会运行`GameplayAbility`.** 相反地, 当服务端执行`Ability`时, 任何需要在Simulated Proxy上展现的视觉效果(像动画蒙太奇)将会被同步(Replicate)或者通过`AbilityTask`进行RPC或者对于像声音和粒子这样的装饰效果使用[GameplayCue](#concepts-gc).  
 
 所有的`GameplayAbility`都会有它们各自由你的游戏逻辑重写的`ActivateAbility()`函数, 附加的逻辑可以添加到`EndAbility()`, 其会在`GameplayAbility`完成或取消时执行.  
 
@@ -1815,7 +1815,7 @@ Epic的[Action RPG](https://www.unrealengine.com/marketplace/en-US/slug/action-r
 
 一个更复杂`GameplayAbility`流程图: ![Complex GameplayAbility Flowchart](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/abilityflowchartcomplex.png)  
 
-复杂的Ability可以使用多个互相交互(激活, 取消等等)的`GameplayAbility`实现.  
+复杂的Ability可以使用多个相互交互(激活, 取消等等)的`GameplayAbility`实现.  
 
 **[⬆ 返回目录](#table-of-contents)**
 
@@ -2144,20 +2144,20 @@ UAbilitySystemComponent::GetActivatableGameplayAbilitySpecsByAllMatchingTags(con
 <a name="concepts-ga-tags"></a>
 #### 4.6.9 Ability标签(Tag)
 
-`GameplayAbility`自带有内建逻辑的`GameplayTagContainer`. 这些`GameplayTag`都不同步.  
+`GameplayAbility`自带有内建逻辑的`GameplayTagContainer`. 这些`GameplayTag`都不进行同步.  
 
 |GameplayTagContainer|描述|
 |:-:|:-:|
 |Ability Tags|`GameplayAbility`拥有的`GameplayTag`, 这只是用来描述`GameplayAbility`的`GameplayTag`.|
-|使用标签取消Ability|当该`GameplayAbility`激活时, `Ability Tags`中拥有这些`GameplayTag`的其他`GameplayAbility`将会取消.|
-|使用标签阻塞Ability|当该`GameplayAbility`激活时, `Ability Tags`中拥有这些`GameplayTag`的其他`GameplayAbility`将会阻塞激活.|
-|激活拥有标签|当该`GameplayAbility`激活时, 这些`GameplayTag`会交给该`GameplayAbility`的拥有者.|
-|激活所需标签|该`GameplayAbility`只有在其拥有者拥有所有这些`GameplayTag`时才会激活.|
-|激活阻塞标签|该`GameplayAbility`在其拥有者拥有任意这些标签时不能被激活.|
-|Source所需标签|该`GameplayAbility`只有在`Source`拥有所有这些`GameplayTag`时才会激活. `Source GameplayTag`只有在该`GameplayAbility`由事件触发时设置.|
-|Source阻塞标签|该`GameplayAbility`在`Source`拥有任意这些标签时不能被激活. `Source GameplayTag`只有在该`GameplayAbility`由事件触发时设置.|
-|Target所需标签|该`GameplayAbility`只有在`Target`拥有所有这些`GameplayTag`时才会激活. `Target GameplayTag`只有在该`GameplayAbility`由事件触发时设置.|
-|Target阻塞标签|该`GameplayAbility`在`Target`拥有任意这些标签时不能被激活. `Target GameplayTag`只有在该`GameplayAbility`由事件触发时设置.|
+|Cancel Abilities with Tag|当该`GameplayAbility`激活时, `Ability Tags`中拥有这些`GameplayTag`的其他`GameplayAbility`将会取消.|
+|Block Abilities with Tag|当该`GameplayAbility`激活时, `Ability Tags`中拥有这些`GameplayTag`的其他`GameplayAbility`将会阻塞激活.|
+|Activation Owned Tags|当该`GameplayAbility`激活时, 这些`GameplayTag`会交给该`GameplayAbility`的拥有者.|
+|Activation Required Tags|该`GameplayAbility`只有在其拥有者拥有所有这些`GameplayTag`时才会激活.|
+|Activation Blocked Tags|该`GameplayAbility`在其拥有者拥有任意这些标签时不能被激活.|
+|Source Required Tags|该`GameplayAbility`只有在`Source`拥有所有这些`GameplayTag`时才会激活. `Source GameplayTag`只有在该`GameplayAbility`由事件触发时设置.|
+|Source Blocked Tags|该`GameplayAbility`在`Source`拥有任意这些标签时不能被激活. `Source GameplayTag`只有在该`GameplayAbility`由事件触发时设置.|
+|Target Required Tags|该`GameplayAbility`只有在`Target`拥有所有这些`GameplayTag`时才会激活. `Target GameplayTag`只有在该`GameplayAbility`由事件触发时设置.|
+|Target Blocked Tags|该`GameplayAbility`在`Target`拥有任意这些标签时不能被激活. `Target GameplayTag`只有在该`GameplayAbility`由事件触发时设置.|
 
 **[⬆ 返回目录](#table-of-contents)**
 
@@ -2577,9 +2577,9 @@ virtual bool ShouldAsyncLoadRuntimeObjectLibraries() const override
 <a name="concepts-asg"></a>
 ### 4.9 Ability System Globals
 
-[AbilitySystemGlobals](https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/UAbilitySystemGlobals/index.html)类保存有关GAS的全局信息. 大多数变量可以在`DefaultGame.ini`中设置. 一般你不需要和该类互动, 但是应该知道它的存在. 如果你需要继承像[GameplayCueManager](#concepts-gc-manager)或[GameplayEffectContext](#concepts-ge-context)的对象, 就必须通过`AbilitySystemGlobals`来做.  
+[AbilitySystemGlobals](https://docs.unrealengine.com/en-US/API/Plugins/GameplayAbilities/UAbilitySystemGlobals/index.html)类保存有关GAS的全局信息. 大多数变量可以在`DefaultGame.ini`中设置. 一般你不需要和该类互动, 但是应该知道它的存在. 如果你需要继承像[GameplayCueManager](#concepts-gc-manager)或[GameplayEffectContext](#concepts-ge-context)这样的对象, 就必须通过`AbilitySystemGlobals`来做.  
 
-为了继承`AbilitySystemGlobals`, 要在`DefaultGame.ini`中设置类名:  
+想要继承`AbilitySystemGlobals`, 需要在`DefaultGame.ini`中设置类名:  
 
 ```c++
 [/Script/GameplayAbilities.AbilitySystemGlobals]
@@ -2591,7 +2591,7 @@ AbilitySystemGlobalsClassName="/Script/ParagonAssets.PAAbilitySystemGlobals"
 <a name="concepts-asg-initglobaldata"></a>
 #### 4.9.1 InitGlobalData()
 
-从UE 4.24开始, 必须调用`UAbilitySystemGlobals::InitGlobalData()`以使用[TargetData](#concepts-targeting-data), 否则你会获得关于`ScriptStructCache`的错误, 并且客户端会从服务端断开连接, 该函数只需要在项目中调用一次. Fortnite从AssetManager类的起始加载函数中调用该函数, Paragon是从UEngine::Init()中调用的. 我发现将其放到`UEngineSubsystem::Initialize()`是个好位置, 这也是样例项目中使用的. 我觉得你应该复制这段模板代码到你自己的项目中以避免出现`TargetData`的使用问题.  
+从UE 4.24开始, 必须调用`UAbilitySystemGlobals::InitGlobalData()`来使用[TargetData](#concepts-targeting-data), 否则你会遇到关于`ScriptStructCache`的错误, 并且客户端会从服务端断开连接, 该函数只需要在项目中调用一次. Fortnite从AssetManager类的起始加载函数中调用该函数, Paragon是从UEngine::Init()中调用的. 我发现将其放到`UEngineSubsystem::Initialize()`是个好位置, 这也是样例项目中使用的. 我觉得你应该复制这段模板代码到你自己的项目中以避免出现`TargetData`的使用问题.  
 
 如果你在使用`AbilitySystemGlobals GlobalAttributeSetDefaultsTableNames`时发生崩溃, 可能之后需要像Fortnite一样在`AssetManager`或`GameInstance`中调用`UAbilitySystemGlobals::InitGlobalData()`而不是在`UEngineSubsystem::Initialize()`中. 该崩溃可能是由于`Subsystem`的加载顺序引发的, `GlobalAttributeDefaultsTables`需要加载`EditorSubsystem`来绑定`UAbilitySystemGlobals::InitGlobalData()`中的委托.  
 
