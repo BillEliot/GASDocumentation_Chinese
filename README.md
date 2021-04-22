@@ -67,8 +67,8 @@
         * [4.5.12 Gameplay Effect Execution Calculation](#concepts-ge-ec)
             + [4.5.12.1 发送数据到Execution Calculation](#concepts-ge-ec-senddata)
                 * [4.5.12.1.1 SetByCaller](#concepts-ge-ec-senddata-setbycaller)
-                * [4.5.12.1.2 支持(Backing)数据Attribute计算Modifier](#concepts-ge-ec-senddata-backingdataattribute)
-                * [4.5.12.1.3 支持(Backing)数据临时变量计算Modifier](#concepts-ge-ec-senddata-backingdatatempvariable)
+                * [4.5.12.1.2 Backing数据Attribute计算Modifier](#concepts-ge-ec-senddata-backingdataattribute)
+                * [4.5.12.1.3 Backing数据临时变量计算Modifier](#concepts-ge-ec-senddata-backingdatatempvariable)
                 * [4.5.12.1.4 GameplayEffectContext](#concepts-ge-ec-senddata-effectcontext)
         * [4.5.13 自定义应用需求](#concepts-ge-car)
         * [4.5.14 花费(Cost)GameplayEffect](#concepts-ge-cost)
@@ -858,7 +858,7 @@ void UGSAttributeSetBase::OnAttributeAggregatorCreated(const FGameplayAttribute&
 
 如果`持续(Duration)`和`无限(Infinite)GameplayEffect`的Ongoing Tag Requirements未满足/满足的话([Gameplay Effect Tags](#concepts-ge-tags)), 那么它们在应用后就可以被暂时的关闭和打开, 关闭`GameplayEffect`会移除其`Modifier`和已应用`GameplayTag`效果, 但是不会移除该`GameplayEffect`, 重新打开`GameplayEffect`会重新应用其`Modifier`和`GameplayTag`.  
 
-如果你需要手动重新计算某个`持续(Duration)`或`无限(Infinite)GameplayEffect`的`Modifier`(假设有一个使用非`Attribute`数据的`MMC`), 可以使用和`UAbilitySystemComponent::ActiveGameplayEffect.GetActiveGameplayEffect(ActiveHandle).Spec.GetLevel()`相同的Level调用`UAbilitySystemComponent::ActiveGameplayEffect.SetActiveGameplayEffectLevel(FActiveGameplayEffectHandle ActiveHandle, int32 NewLevel)`. 当支持(backing)`Attribute`更新时, 基于支持(backing)`Attribute`的`Modifier`会自动更新. SetActiveGameplayEffectLevel()更新`Modifier`的关键函数是:  
+如果你需要手动重新计算某个`持续(Duration)`或`无限(Infinite)GameplayEffect`的`Modifier`(假设有一个使用非`Attribute`数据的`MMC`), 可以使用和`UAbilitySystemComponent::ActiveGameplayEffect.GetActiveGameplayEffect(ActiveHandle).Spec.GetLevel()`相同的Level调用`UAbilitySystemComponent::ActiveGameplayEffect.SetActiveGameplayEffectLevel(FActiveGameplayEffectHandle ActiveHandle, int32 NewLevel)`. 当`Backing Attribute`更新时, 基于支持`Backing Attribute`的`Modifier`会自动更新. SetActiveGameplayEffectLevel()更新`Modifier`的关键函数是:  
 
 ```c++
 MarkItemDirty(Effect);
@@ -946,8 +946,8 @@ Override`Modifier`会优先覆盖最后应用的`Modifier`得出的最终值.
 |Modifier类型|描述|
 |:-:|:-:|
 |Scalable Float|FScalableFloat结构体可以指向某个横向为变量, 纵向为等级的Data Table, `Scalable Float`会以Ability的当前等级自动读取指定Data Table的某行值(或者在[GameplayEffectSpec](#concepts-ge-spec)中重写的不同等级), 该值可以被视为系数处理, 如果没有指定Data Table/Row, 那么该值就会被视为1, 因此该系数就可以在所有等级都硬编码为一个单一值.![ScalableFloat](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/scalablefloats.png)|
-|Attribute Based|`Attribute` Based`Modifier`将CurrentValue或BaseValue视为Source(`GameplayEffectSpec`的创建者)或Target(`GameplayEffectSpec`的接收者)的支持(Backing)`Attribute`, 可以使用系数和前后系数之和来修改它. `Snapshotting`意味着当`GameplayEffectSpec`创建时该`Attribute`被捕获, 而`no snapshotting`意味着当`GameplayEffectSpec`应用时该`Attribute`被捕获.|
-|Custom Calculation Class|`Custom Calculation Class`为复杂的`Modifier`提供了最大的灵活性, 该`Modifier`使用了[ModifierMagnitudeCalculation](#concepts-ge-mmc)类, 且可以使用系数和前后系数之和处理浮点值结果.|
+|Attribute Based|`Attribute Based Modifier`将Source(`GameplayEffectSpec`的创建者)或Target(`GameplayEffectSpec`的接收者)上的CurrentValue或BaseValue视为`Backing Attribute`, 可以使用系数和Pre与Post系数和来修改它. `Snapshotting`意味着当`GameplayEffectSpec`创建时捕获该`Attribute`, 而`No Snapshotting`意味着当`GameplayEffectSpec`应用时捕获该`Attribute`.|
+|Custom Calculation Class|`Custom Calculation Class`为复杂的`Modifier`提供了最大的灵活性, 该`Modifier`使用了[ModifierMagnitudeCalculation](#concepts-ge-mmc)类, 且可以使用系数和Pre与Post系数和来处理浮点值结果.|
 |Set By Caller|`SetByCaller`Modifier是运行时由Ability或`GameplayEffectSpec`的创建者于`GameplayEffect`之外设置的值, 例如, 如果你想让伤害值随玩家蓄力技能的长短而变化, 那么就需要使用`SetByCaller`. `SetByCaller`本质上是存于`GameplayEffectSpec`中的`TMap<FGameplayTag, float>`, `Modifier`只是告知`Aggregator`去寻找与提供的`GameplayTag`相关联的`SetByCaller`值. `Modifier`使用的`SetByCaller`只能使用该概念的`GameplayTag`形式, `FName`形式在此处不适用. 如果`Modifier`被设置为`SetByCaller`, 但是带有正确`GameplayTag`的`SetByCaller`在`GameplayEffectSpec`中不存在, 那么游戏会抛出一个运行时错误并返回0, 这可能在`Divide`操作中造成问题. 参阅[SetByCallers](#concepts-ge-spec-setbycaller)获取更多关于如何使用`SetByCaller`的信息.|
 
 **[⬆ 返回目录](#table-of-contents)**
@@ -1330,9 +1330,9 @@ float Damage = FMath::Max<float>(Spec.GetSetByCallerMagnitude(FGameplayTag::Requ
 **[⬆ 返回目录](#table-of-contents)**
 
 <a name="concepts-ge-ec-senddata-backingdataattribute"></a>
-###### 4.5.12.1.2 支持(Backing)数据Attribute计算Modifier
+###### 4.5.12.1.2 Backing数据Attribute计算Modifier
 
-如果你想硬编码值到`GameplayEffect`, 可以使用`CalculationModifier`传递, 其使用捕获的`Attribute`之一作为支持(Backing)数据.  
+如果你想硬编码值到`GameplayEffect`, 可以使用`CalculationModifier`传递, 其使用捕获的`Attribute`之一作为Backing数据.  
 
 在这个截图例子中, 我们给捕获的伤害值`Attribute`增加了50, 你也可以将其设为`Override`来直接传入硬编码值.  
 
@@ -1349,7 +1349,7 @@ ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().Damag
 **[⬆ 返回目录](#table-of-contents)**
 
 <a name="concepts-ge-ec-senddata-backingdatatempvariable"></a>
-###### 4.5.12.1.3 支持(Backing)数据临时变量计算Modifier
+###### 4.5.12.1.3 Backing数据临时变量计算Modifier
 
 如果你想硬编码值到`GameplayEffect`, 可以在C++中使用`CalculationModifier`传递, 其使用一个`临时变量`或`暂时聚合器(Transient Aggregator)`, 该`临时变量`与`GameplayTag`相关联.  
 
@@ -1357,7 +1357,7 @@ ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().Damag
 
 ![Backing Data Temporary Variable Calculation Modifier](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/calculationmodifierbackingdatatempvariable.png)
 
-添加支持(Backing)临时变量到你的`ExecutionCalculation`构造函数:  
+添加Backing临时变量到你的`ExecutionCalculation`构造函数:  
 
 ```c++
 ValidTransientAggregatorIdentifiers.AddTag(FGameplayTag::RequestGameplayTag("Data.Damage"));
@@ -1988,7 +1988,7 @@ void AGDCharacterBase::AddCharacterAbilities()
 }
 ```
 
-当授予这些`GameplayAbility`时, 我们就在使用`UGameplayAbility`类, Ability等级, 其绑定的输入和`SourceObject`或将该`GameplayAbility`设置到该`ASC`的Source(源)创建`GameplayAbilitySpec`.  
+当授予这些`GameplayAbility`时, 我们就在使用`UGameplayAbility`类, Ability等级, 其绑定的输入和`SourceObject`或将该`GameplayAbility`设置到该`ASC`的源(Source)创建`GameplayAbilitySpec`.  
 
 **[⬆ 返回目录](#table-of-contents)**
 
