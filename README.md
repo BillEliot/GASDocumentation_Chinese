@@ -57,7 +57,7 @@
             + [4.5.4.1 Multiply和Divide Modifier](#concepts-ge-mods-multiplydivide)
             + [4.5.4.2 Modifier的GameplayTag](#concepts-ge-mods-gameplaytags)
         * [4.5.5 GameplayEffect堆栈](#concepts-ge-stacking)
-        * [4.5.6 授予的Ability](#concepts-ge-ga)
+        * [4.5.6 授予Ability](#concepts-ge-ga)
         * [4.5.7 GameplayEffect标签](#concepts-ge-tags)
         * [4.5.8 免疫](#concepts-ge-immunity)
         * [4.5.9 GameplayEffectSpec](#concepts-ge-spec)
@@ -93,7 +93,7 @@
         * [4.6.6 获取激活的Ability](#concepts-ga-definition-activeability)
         * [4.6.7 实例化策略](#concepts-ga-instancing)
         * [4.6.8 网络执行策略(Net Execution Policy)](#concepts-ga-net)
-        * [4.6.9 Ability标签(Tag)](#concepts-ga-tags)
+        * [4.6.9 Ability标签](#concepts-ga-tags)
         * [4.6.10 Gameplay Ability Spec](#concepts-ga-spec)
         * [4.6.11 传递数据到Ability](#concepts-ga-data)
         * [4.6.12 Ability花费(Cost)和冷却(Cooldown)](#concepts-ga-commit)
@@ -1091,7 +1091,7 @@ float FAggregatorModChannel::MultiplyMods(const TArray<FAggregatorMod>& InMods, 
 
 一个普遍用法是当想要强制另一个玩家做某些事的时候, 像击退或拉取时移动他们, 就会对它们应用一个`GameplayEffect`来授予其一个自动激活的Ability(查看[被动Ability](#concepts-ga-activating-passive)来了解如何在Ability被授予时自动激活它), 从而使其做出相应的动作.  
 
-设计师可以决定一个`GameplayEffect`能够授予哪些Ability, 在什么等级时授予, 将其[绑定](#concepts-ga-input)在什么输入键上以及授予Ability的移除策略.  
+设计师可以决定一个`GameplayEffect`能够授予哪些Ability, 授予的Ability等级, 将其[绑定](#concepts-ga-input)在什么输入键上以及该Ability的移除策略.  
 
 |移除策略|描述|
 |:-:|:-:|
@@ -2149,8 +2149,8 @@ UAbilitySystemComponent::GetActivatableGameplayAbilitySpecsByAllMatchingTags(con
 |GameplayTagContainer|描述|
 |:-:|:-:|
 |Ability Tags|`GameplayAbility`拥有的`GameplayTag`, 这只是用来描述`GameplayAbility`的`GameplayTag`.|
-|Cancel Abilities with Tag|当该`GameplayAbility`激活时, `Ability Tags`中拥有这些`GameplayTag`的其他`GameplayAbility`将会取消.|
-|Block Abilities with Tag|当该`GameplayAbility`激活时, `Ability Tags`中拥有这些`GameplayTag`的其他`GameplayAbility`将会阻塞激活.|
+|Cancel Abilities with Tag|当该`GameplayAbility`激活时, 其他`Ability Tags`中拥有这些`GameplayTag`的`GameplayAbility`将会被取消.|
+|Block Abilities with Tag|当该`GameplayAbility`激活时, 其他`Ability Tags`中拥有这些`GameplayTag`的`GameplayAbility`将会阻塞激活.|
 |Activation Owned Tags|当该`GameplayAbility`激活时, 这些`GameplayTag`会交给该`GameplayAbility`的拥有者.|
 |Activation Required Tags|该`GameplayAbility`只有在其拥有者拥有所有这些`GameplayTag`时才会激活.|
 |Activation Blocked Tags|该`GameplayAbility`在其拥有者拥有任意这些标签时不能被激活.|
