@@ -157,6 +157,7 @@
     + [9.1 LogAbilitySystem: Warning: Can't activate LocalOnly or LocalPredicted ability %s when not local!](#troubleshooting-notlocal)
     + [9.2 ScriptStructCache错误](#troubleshooting-scriptstructcache)
     + [9.3 动画蒙太奇不能同步到客户端](#troubleshooting-replicatinganimmontages)
+	+ [9.4 复制的蓝图Actor会将AttributeSet设置为nullptr](#troubleshooting-duplicatingblueprintactors)
 * [10. ASC常用术语缩略](#acronyms)
 * [11. 其他资源](#resources)
 * [12. GAS更新日志](#changelog)
