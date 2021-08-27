@@ -3147,6 +3147,65 @@ Fortnite大逃杀(Fortnite Battle Royale)世界中有很多可损坏的`AActor`(
 
 **[⬆ 返回目录](#table-of-contents)**
 
+<a name="troubleshooting-duplicatingblueprintactors"></a>
+### 9.4 复制的蓝图Actor会将AttributeSet设置为nullptr
+这是一个[虚幻引擎的bug](https://issues.unrealengine.com/issue/UE-81109)，当使用从一个存在的蓝图Actor类复制的方式来创建新的类，这会让这个类中将AttributeSet指针设置为空指针。
+对此有一些变通的方法，我已经成功地不在我的类内创建定制的`AttributeSet`指针（头文件中没有指针，也不在构造函数中调用`CreateDefaultSubobject`），
+而是直接在PostInitializeComponents()中向`ASC`添加`AttributeSets`（样本项目中没有显示）。
+复制的AttributeSets将仍然存在于`ASC`的`SpawnedAttributes`数组中。它看起来像这样：
+
+```c++
+void AGDPlayerState::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->AddSet<UGDAttributeSetBase>();
+		// ... 其他你可能拥有的属性集
+	}
+}
+```
+
+在这种情况下，你想要读取或者修改`AttributeSet`的值，就需要调用`ASC`实例中的函数，而不是[`AttributeSet`中定义的宏](#concepts-as-attributes)。
+
+
+```c++
+/** 返回当前(最终)属性值 */
+float GetNumericAttribute(const FGameplayAttribute &Attribute) const;
+
+/** 设置一个属性的基础值。 当前激活的修改器不会被清除并将在NewBaseValue上发挥作用 */
+void SetNumericAttributeBase(const FGameplayAttribute &Attribute, float NewBaseValue);
+```
+
+所以GetHealth()的实现将会如下：
+
+```c++
+float AGDPlayerState::GetHealth() const
+{
+	if (AbilitySystemComponent)
+	{
+		return AbilitySystemComponent->GetNumericAttribute(UGDAttributeSetBase::GetHealthAttribute());
+	}
+
+	return 0.0f;
+}
+```
+
+设置（初始化）生命值属性的实现将会是这样：
+
+```c++
+const float NewHealth = 100.0f;
+if (AbilitySystemComponent)
+{
+	AbilitySystemComponent->SetNumericAttributeBase(UGDAttributeSetBase::GetHealthAttribute(), NewHealth);
+}
+```
+
+顺便提一下，往`ASC`组件注册的每个`AttributeSet`类最多只有一个对象。
+
+**[⬆ Back to Top](#table-of-contents)**
+
 <a name="acronyms"></a>
 # 10. ASC常用术语缩略
 
