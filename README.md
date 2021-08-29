@@ -111,6 +111,8 @@
 		- [4.8 Gameplay Cues](#48-gameplay-cues)
 			- [4.8.1 GameplayCue定义](#481-gameplaycue定义)
 			- [4.8.2 触发GameplayCue](#482-触发gameplaycue)
+				- [GameplayEffect](#gameplayeffect)
+				- [手动调用](#手动调用)
 			- [4.8.3 客户端GameplayCue](#483-客户端gameplaycue)
 			- [4.8.4 GameplayCue参数](#484-gameplaycue参数)
 			- [4.8.5 Gameplay Cue Manager](#485-gameplay-cue-manager)
@@ -2382,7 +2384,7 @@ GAS自带的`AbilityTask`可以使用挂载在`CharacterMovementComponent`中的
 
 我们可以在`ASC`中通过发送一个**强制带有"GameplayCue"父名**的相应`GameplayTag`和`GameplayCueManager`的事件类型(Execute, Add或Remove)来触发`GameplayCue`. `GameplayCueNotify`对象和其他实现`IGameplayCueInterface`的`Actor`可以基于`GameplayCue`的`GameplayTag(GameplayCueTag)`来订阅(Subscribe)这些事件.  
 
-**Note:** 再次强调, `GameplayCue`的`GameplayTag`需要以`GameplayCue`的父`GameplayTag`为开头, 举例来说, 一个有效的`GameplayCue`的`GameplayTag`可能是`GameplayCue.A.B.C`.  
+**Note:** 再次强调, `GameplayCue`的`GameplayTag`需要以`GameplayCue`为开头, 举例来说, 一个有效的`GameplayCue`的`GameplayTag`可能是`GameplayCue.A.B.C`.  
 
 有两个`GameplayCueNotify`类, `Static`和`Actor`. 它们各自响应不同的事件, 并且不同的`GameplayEffect`类型可以触发它们. 根据你的逻辑重写相关的事件.  
 
@@ -2404,9 +2406,13 @@ GAS自带的`AbilityTask`可以使用挂载在`CharacterMovementComponent`中的
 <a name="concepts-gc-trigger"></a>
 #### 4.8.2 触发GameplayCue
 
-在成功应用(未被Tag或Immunity阻塞)的`GameplayEffect`中填写所有应该被触发`GameplayCue`的`GameplayTag`.  
+##### GameplayEffect
+
+在成功应用(未被Tag或Immunity阻塞)的`GameplayEffect`中填写所有应该触发的`GameplayCue`的`GameplayTag`.  
 
 ![GameplayCue Triggered from a GameplayEffect](https://raw.githubusercontent.com/BillEliot/GASDocumentation_Chinese/main/Images/gcfromge.png)  
+
+##### 手动调用
 
 `UGameplayAbility`提供了蓝图节点来`Execute`, `Add`或`Remove` GameplayCue.  
 
@@ -2441,7 +2447,7 @@ void RemoveAllGameplayCues();
 
 * 抛射物伤害
 * 近战碰撞伤害
-* 自动画蒙太奇触发的`GameplayCue`
+* 动画蒙太奇触发的`GameplayCue`
 
 你应该添加到`ASC`子类中的客户端`GameplayCue`函数:  
 
@@ -2481,14 +2487,14 @@ void UPAAbilitySystemComponent::RemoveGameplayCueLocal(const FGameplayTag Gamepl
 <a name="concepts-gc-parameters"></a>
 #### 4.8.4 GameplayCue参数
 
-`GameplayCue`接受一个包含额外`GameplayCue `信息的`FGameplayCueParameters`结构体作为参数. 如果你在`GameplayAbility`或`ASC`中使用函数手动触发`GameplayCue`, 那么就必须手动填充传递给`GameplayCue`的`GameplayCueParameters`结构体. 如果`GameplayCue`由`GameplayEffect`触发, 那么下列的变量会自动填充到`FGameplayCueParameters`结构体中:  
+`GameplayCue`接受一个包含额外`GameplayCue`信息的`FGameplayCueParameters`结构体作为参数. 如果你在`GameplayAbility`或`ASC`中使用函数手动触发`GameplayCue`, 那么就必须手动填充传递给`GameplayCue`的`GameplayCueParameters`结构体. 如果`GameplayCue`由`GameplayEffect`触发, 那么下列的变量会自动填充到`FGameplayCueParameters`结构体中:  
 
 * AggregatedSourceTags
 * AggregatedTargetTags
 * GameplayEffectLevel
 * AbilityLevel
 * [EffectContext](#concepts-ge-context)
-* Magnitude(如果`GameplayEffect`有一个在`GameplayCue`标签容器(TagContainer)之上的下拉列表(Dropdown)中用于Magnitude选择的`Attribute`, 并且有一个相关的影响该`Attribute`的`Modifier`)
+* Magnitude(如果`GameplayEffect`具有在`GameplayCue`标签容器(TagContainer)上方的下拉列表中选择的`Magnitude Attribute`和影响该`Attribute`的相应`Modifier`)
 
 当手动触发`GameplayCue`时, `GameplayCueParameters`中的`SourceObject`变量似乎是一个传递任意数据到`GameplayCue`的好地方.  
 
