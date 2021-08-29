@@ -2297,7 +2297,7 @@ GASShooter暴露了一个蓝图节点以允许上文提到的仅客户端调用�
 <a name="concepts-at-definition"></a>
 #### 4.7.1 AbilityTask定义
 
-`GameplayAbility`只能在一帧中执行, 这本身并不能提供太多的灵活性, 为了实现随时间推移触发或响应经过一段时间后触发的委托操作, 我们需要使用`AbilityTask`.  
+`GameplayAbility`只能在一帧中执行, 这本身并不能提供太多灵活性, 为了实现随时间推移而触发或响应一段时间后触发的委托操作, 我们需要使用`AbilityTask`.  
 
 GAS自带很多`AbilityTask`:  
 
@@ -2308,7 +2308,7 @@ GAS自带很多`AbilityTask`:
 * 响应玩家输入的Task
 * 更多
 
-`UAbilityTask`在构造函数中强制硬编码最多允许1000个同时运行的`AbilityTask`, 当设计那些同时拥有数百个Character的游戏(像RTS)的`GameplayAbility`时要注意这一点.  
+`UAbilityTask`的构造函数中强制硬编码允许最多1000个同时运行的`AbilityTask`, 当设计那些同时拥有数百个Character的游戏(像RTS)的`GameplayAbility`时要注意这一点.  
 
 **[⬆ 返回目录](#table-of-contents)**
 
@@ -2652,7 +2652,7 @@ GAS的预测实现尝试解决的问题:
 <a name="concepts-p-key"></a>
 #### 4.10.1 Prediction Key
 
-GAS的预测建立在`Prediction Key`的概念上, 其是一个由客户端激活`GameplayAbility`时生成的整形标识符.  
+GAS的预测建立在`Prediction Key`的概念上, 其是一个由客户端激活`GameplayAbility`时生成的整型标识符.  
 
 * 客户端激活`GameplayAbility`时生成`Prediction Key`, 这是`Activation Prediction Key`.  
 * 客户端使用`CallServerTryActivateAbility()`将该`Prediction Key`发送到服务端.
@@ -2750,7 +2750,7 @@ Epic最近发起了一项倡议, 将使用新的网络预测插件替换`Charact
 |Instant|该定位无需特殊逻辑即可立即进行, 或者用户输入决定何时开始.|
 |UserConfirmed|当[Ability绑定到`Confirm`输入](#concepts-ga-input)且用户确认或调用`UAbilitySystemComponent::TargetConfirm()`时触发该定位. `TargetActor`也会响应绑定的`Cancel`输入或者调用`UAbilitySystemComponent::TargetCancel()`来取消定位.|
 |Custom|GameplayTargeting Ability负责调用`UGameplayAbility::ConfirmTaskByInstanceName()`来决定何时准备好定位数据. `TargetActor`也可以响应`UGameplayAbility::CancelTaskByInstanceName()`来取消定位.|
-|CustomMulti|GameplayTargeting Ability负责调用`UGameplayAbility::ConfirmTaskByInstanceName()`来决定何时准备好定位数据. `TargetActor`也可以响应`UGameplayAbility::CancelTaskByInstanceName()`来取消定位. 不应在数据产生时结束AbilityTask.|
+|CustomMulti|GameplayTargeting Ability负责调用`UGameplayAbility::ConfirmTaskByInstanceName()`来决定何时准备好定位数据. `TargetActor`也可以响应`UGameplayAbility::CancelTaskByInstanceName()`来取消定位. 不应在数据生成后就结束AbilityTask, 因为其允许多次确认.|
 
 并不是所有的`TargetActor`都支持每个`EGameplayTargetingConfirmation::Type`, 例如, `AGameplayAbilityTargetActor_GroundTrace`就不支持`Instant`确认.  
 
